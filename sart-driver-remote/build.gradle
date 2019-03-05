@@ -1,0 +1,21 @@
+
+group = 'org.sartframework'
+
+
+dependencies {
+ 
+    implementation project(":sart-commons")
+    
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+    
+    implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
+    
+    implementation("org.apache.httpcomponents:fluent-hc:$httpComponents")
+}
+
+
+jar {
+
+	baseName = "sart-driver-remote"
+	version = "$sartVersion"
+}

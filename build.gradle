@@ -1,0 +1,39 @@
+buildscript {
+
+	ext {
+		springBootVersion = '2.0.6.RELEASE'
+	}
+	
+	repositories {
+		        mavenCentral()
+		        maven { url "https://repo.spring.io/snapshot" }
+                maven { url "https://repo.spring.io/milestone" }
+                maven { url "https://plugins.gradle.org/m2/" }
+	}
+	
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+
+
+subprojects {
+     
+    apply plugin: 'java'
+    apply plugin: 'eclipse'
+   
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenCentral()
+    }
+
+    configurations.all {
+        exclude group: "org.slf4j", module: "slf4j-log4j12"
+        exclude group: "log4j", module: "log4j"
+    }
+}
+

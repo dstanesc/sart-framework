@@ -1,0 +1,16 @@
+
+group = 'org.sartframework'
+
+dependencies {
+
+     implementation project(":sart-commons")
+     
+     implementation("org.slf4j:slf4j-api:$slf4jVersion")
+}
+
+
+jar {
+
+	baseName = "sart-cae-commons"
+	version = "$sartVersion"
+}

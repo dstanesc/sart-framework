@@ -1,0 +1,34 @@
+apply plugin: 'org.springframework.boot'
+
+group = 'org.sartframework'
+
+dependencies {
+   
+        implementation project(":sart-commons") 
+        implementation project(":sart-driver-remote")
+        implementation project(":sart-driver-local")
+        //implementation project(":sart-transaction")
+        implementation project(":sart-cae-commons")
+        
+
+        implementation("org.apache.kafka:kafka-streams:$kafkaStreamsVersion")
+        implementation("org.springframework.kafka:spring-kafka:$springKafkaVersion")
+        implementation("org.springframework.boot:spring-boot-starter:$springBootVersion")
+	    //implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
+        //implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
+        implementation("junit:junit:$junitVersion")
+
+        runtime("io.netty:netty-transport-native-epoll:$nettyNativeEpoll")
+        
+        //FIXME remove
+        runtime ("com.h2database:h2:$h2dbVersion")
+
+	    implementation("junit:junit:$junitVersion")
+}
+
+
+jar {
+
+	baseName = "sart-cae"
+	version = "$sartVersion"
+}

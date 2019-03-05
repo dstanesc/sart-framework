@@ -1,0 +1,22 @@
+
+group = 'org.sartframework'
+
+dependencies {
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+    implementation("io.projectreactor:reactor-core:$reactorVersion")
+    implementation("org.apache.avro:avro:$avroVersion")
+    implementation("org.springframework.kafka:spring-kafka:$springKafkaVersion")
+    implementation("org.apache.kafka:kafka-streams:$kafkaStreamsVersion")
+    implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
+    implementation("io.protostuff:protostuff-core:$protostuffVersion")
+    implementation("io.protostuff:protostuff-runtime:$protostuffVersion")
+    
+    testImplementation("junit:junit:$junitVersion")
+}
+
+
+jar {
+	baseName = "sart-commons"
+	version = "$sartVersion"
+}

@@ -1,0 +1,13 @@
+include "sart-commons"
+include "sart-driver-remote"
+include "sart-transaction"
+include "sart-proj"
+include "sart-driver-local"
+include "sart-conflict"
+include "sart-cae-commons"
+include "sart-cae-conflict"
+include "sart-cae-transaction"
+include "sart-cae-proj"
+include "sart-cae-client"
+
+rootProject.name = 'sart-framework'

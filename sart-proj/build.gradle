@@ -1,0 +1,19 @@
+
+group = 'org.sartframework'
+
+dependencies {
+   
+    implementation project(":sart-commons")
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+    implementation("io.projectreactor:reactor-core:$reactorVersion")
+    implementation("org.apache.kafka:kafka-streams:$kafkaStreamsVersion")
+    implementation("org.springframework.kafka:spring-kafka:$springKafkaVersion")
+    implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
+}
+
+jar {
+
+	baseName = "sart-proj"
+	version = "$sartVersion"
+}

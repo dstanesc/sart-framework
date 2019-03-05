@@ -1,0 +1,32 @@
+
+group = 'org.sartframework'
+
+dependencies {
+   
+  
+    implementation project(":sart-proj")
+    
+    implementation project(":sart-commons")  
+   
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
+    implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
+    implementation("org.apache.httpcomponents:fluent-hc:$httpComponents")
+    implementation("org.apache.kafka:kafka-streams:$kafkaStreamsVersion")
+    implementation("org.springframework.kafka:spring-kafka:$springKafkaVersion")
+    implementation("org.apache.zookeeper:zookeeper:$zookeeperVersion")
+    implementation("org.apache.curator:curator-recipes:$curatorVersion")
+    implementation("org.apache.curator:curator-framework:$curatorVersion");
+
+    //java.lang.UnsatisfiedLinkError: no netty_transport_native_epoll_x86_64 in java.library.path
+    //compile('io.netty:netty-transport-native-epoll:4.1.31.Final')
+    
+    testImplementation("junit:junit:$junitVersion")
+    
+    
+}
+
+jar {
+
+	baseName = "sart-transaction"
+	version = "$sartVersion"
+}
