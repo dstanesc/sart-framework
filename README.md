@@ -1,66 +1,3 @@
-## Quick Start
-
-
-#### Install Kafka 
-
-```bash
-mkdir ~/kafka && cd ~/kafka
-
-curl "http://www.apache.org/dist/kafka/2.1.0/kafka_2.11-2.1.0.tgz" -o ~/kafka/kafka.tgz
-
-tar xvzf ~/kafka/kafka.tgz --strip 1
-```
-
-#### Install SART
-```bash
-git clone https://github.com/dstanesc/sart-framework.git
-```
-
-#### Start Zookeeper
-```bash
-bin/zookeeper-server-start.sh config/zookeeper.properties
-```
-
-#### Start Kafka
-```bash
-bin/kafka-server-start.sh config/server.properties
-```
-
-#### Start SART
-
-Terminal 1
-
-```bash
-cd ~/sart-framework
-
-./gradlew :sart-cae-transaction:bootRun
-
-```
-
-Terminal 2
-
-```bash
-cd ~/sart-framework
-
-./gradlew :sart-cae-proj:bootRun
-
-```
-Terminal 3
-
-```bash
-cd ~/sart-framework
-
-./gradlew :sart-cae-conflict:bootRun
-```
-
-##### Execute SART Tests
-```bash
-cd ~/sart-framework
-
-./gradlew :sart-cae-transaction:test --tests org.sartframework.demo.cae.ValidationSuite  
-```
-
-
 # SART Framework 
 
 
@@ -942,3 +879,49 @@ or queried on-demand from the built-in conflict resolution projections, eg.
 <b id="r16">Richard P. Gabriel</b>, Conscientious Software
 
 <b id="r17">Wikipedia</b>, Observability, how well internal states of a system can be inferred from knowledge of its external outputs
+
+## Quick Start
+
+
+#### Install SART
+```bash
+git clone https://github.com/dstanesc/sart-framework.git
+```
+
+#### Start Zookeeper
+```bash
+bin/zookeeper-server-start.sh config/zookeeper.properties
+```
+
+#### Start Kafka
+```bash
+bin/kafka-server-start.sh config/server.properties
+```
+
+#### Start SART Demo
+
+Terminal 1
+
+```bash
+./gradlew :sart-cae-transaction:bootRun
+
+```
+
+Terminal 2
+
+```bash
+./gradlew :sart-cae-proj:bootRun
+
+```
+Terminal 3
+
+```bash
+./gradlew :sart-cae-conflict:bootRun
+```
+
+##### Execute SART Demo Tests
+```bash
+./gradlew :sart-cae-transaction:test --tests org.sartframework.demo.cae.ValidationSuite  
+```
+
+
