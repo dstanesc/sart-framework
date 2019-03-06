@@ -4,7 +4,11 @@ import org.sartframework.query.AbstractQuery;
 
 public class InputDeckByIdQuery extends AbstractQuery {
 
-    final String inputDeckId;
+    String inputDeckId;
+    
+    public InputDeckByIdQuery() {
+        super();
+    }
 
     public InputDeckByIdQuery(String inputDeckId) {
         super();
@@ -14,7 +18,11 @@ public class InputDeckByIdQuery extends AbstractQuery {
     public String getInputDeckId() {
         return inputDeckId;
     }
-    
+
+    public void setInputDeckId(String inputDeckId) {
+        this.inputDeckId = inputDeckId;
+    }
+
     public boolean matches(String inputDeckId) {
         return this.inputDeckId.equals(inputDeckId);
     }

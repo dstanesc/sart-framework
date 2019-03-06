@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
+import org.sartframework.command.transaction.TransactionStatus.Isolation;
 import org.sartframework.demo.cae.client.RemoteInputDeckQueryApi;
 import org.sartframework.demo.cae.client.RemoteSimulationApi;
 import org.sartframework.demo.cae.command.InputDeckCreateCommand;
@@ -65,7 +66,7 @@ public class VersionTest {
 
         String inputDeckId = nextInputDeckIdentity();
 
-        DomainTransaction rx = driver.createDomainTransaction();
+        DomainTransaction rx = driver.createDomainTransaction(Isolation.READ_UNCOMMITTED);
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 
@@ -99,6 +100,8 @@ public class VersionTest {
                 
             } else throw new IllegalStateException("unexpected verison " + inputDeckVersion);
         });
+        
+        rx.start().commit();
         
         DomainTransaction wx1 = driver.createDomainTransaction();
 

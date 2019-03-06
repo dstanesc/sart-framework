@@ -231,9 +231,10 @@ public class InputDeckProjection extends KafkaDomainProjection {
         // xmin <= highest && xmin not in [x1, x2, ...xk (running transactions)]
         // && [xmax == null || xmax > xid]
        
-        //FIXME handle all isolation levels 1 - READ_UNCOMMITTED, 2- READ_COMMITTED, 4- READ_SNAPSHOT
+        int isolation = domainQuery.getIsolation();
         
-       // int isolation = domainQuery.getIsolation();
+        //FIXME handle properly all isolation levels 1 - READ_UNCOMMITTED, 2- READ_COMMITTED, 4- READ_SNAPSHOT
+        if(isolation == 1) return entityList;
 
         SystemSnapshot systemSnapshot = domainQuery.getSystemSnapshot();
         
@@ -259,8 +260,9 @@ public class InputDeckProjection extends KafkaDomainProjection {
                     filtered, xmin, xid, xmin, highestCommitted, xmin, running, xmax, xmax, xid);
 
                 return filtered;
+                
             } catch (Exception e) {
-                // FIXME dstanesc watch out for swallowed Exceptions! They will come after you!
+                
               throw new RuntimeException();
             }
             
