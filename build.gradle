@@ -31,6 +31,10 @@ subprojects {
         mavenCentral()
     }
 
+    test {
+        reports.html.enabled = true
+    }
+    
     configurations.all {
         exclude group: "org.slf4j", module: "slf4j-log4j12"
         exclude group: "log4j", module: "log4j"
