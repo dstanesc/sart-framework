@@ -1,11 +1,7 @@
 package org.sartframework.demo.cae.projection;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.SortedSet;
-import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -22,24 +18,20 @@ import org.sartframework.demo.cae.result.InputDeckQueryResult;
 import org.sartframework.event.QueryEvent;
 import org.sartframework.kafka.channels.KafkaWriters;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.projection.ProjectedEntity;
 import org.sartframework.projection.EntityIdentity;
 import org.sartframework.projection.kafka.query.KafkaDomainProjection;
 import org.sartframework.projection.kafka.query.KafkaDomainQueryResultsEmitter;
 import org.sartframework.query.AbstractQuery;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.query.QueryResultsEmitter;
-import org.sartframework.result.EmptyResult;
-import org.sartframework.result.EndResult;
 import org.sartframework.result.QueryResult;
-import org.sartframework.session.SystemSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class InputDeckProjection extends KafkaDomainProjection {
+public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity, InputDeckQueryResult> {
 
     final static Logger LOGGER = LoggerFactory.getLogger(InputDeckProjection.class);
 
@@ -227,72 +219,11 @@ public class InputDeckProjection extends KafkaDomainProjection {
         return resultList(query, visibleList);
     }
 
-    private List<InputDeckEntity> filterVisibility(DomainQuery domainQuery, List<InputDeckEntity> entityList) {
-        // xmin <= highest && xmin not in [x1, x2, ...xk (running transactions)]
-        // && [xmax == null || xmax > xid]
-       
-        int isolation = domainQuery.getIsolation();
-        
-        //FIXME handle properly all isolation levels 1 - READ_UNCOMMITTED, 2- READ_COMMITTED, 4- READ_SNAPSHOT
-        if(isolation == 1) return entityList;
-
-        SystemSnapshot systemSnapshot = domainQuery.getSystemSnapshot();
-        
-        if(systemSnapshot.isEmpty()) return  entityList;
-
-        Long highestCommitted = systemSnapshot.getHighestCommitted();
-
-        SortedSet<Long> running = systemSnapshot.getRunning();
-
-        long xid = domainQuery.getQueryXid();
-
-        return entityList.stream().filter(entity -> {
-
-            try {
-                long xmin = entity.getXmin();
-
-                long xmax = entity.getXmax();
-
-                boolean filtered = xmin == xid || (xmin <= highestCommitted && !running.contains(xmin) && (xmax == ProjectedEntity.XMAX_NOT_SET || xmax > xid));
-
-                LOGGER.info(
-                    "Returned = {} :  xmin {} == xid {} || (xmin {} <= highestCommitted {} AND  xmin {} /= running transactions {} AND (xmax {} == NOT SET OR xmax {} > xid {})) ",
-                    filtered, xmin, xid, xmin, highestCommitted, xmin, running, xmax, xmax, xid);
-
-                return filtered;
-                
-            } catch (Exception e) {
-                
-              throw new RuntimeException();
-            }
-            
-        }).collect(Collectors.toList());
-    }
-
-    private List<? super QueryResult> resultList(AbstractQuery query, List<InputDeckEntity> entityList) {
-        return entityList.isEmpty() ? emptyResult(query) : nonEmptyResult(query, entityList);
-    }
-
-    private List<? super QueryResult> emptyResult(AbstractQuery query) {
-        return query.isQuerySubscription() ? new ArrayList<>(0) : Arrays.asList(new EmptyResult(query.getQueryKey()));
-    }
-
-    protected List<? super QueryResult> nonEmptyResult(AbstractQuery query, List<InputDeckEntity> entityList) {
-
-        List<? super QueryResult> resultList = entityList.stream().map(e -> {
-
-            LOGGER.info("Return InputDeckQueryResult aggregateVersion={} aggregateKey={}", e.getAggregateVersion(), e.getAggregateKey());
-
-            return new InputDeckQueryResult(query.getQueryKey(), e.getXmin(), e.getAggregateKey(), e.getAggregateVersion(), e.getEntityCreationTime(), e.getInputDeckName(),
-                e.getInputDeckFile());
-
-        }).collect(Collectors.toList());
-
-        if (!query.isQuerySubscription()) {
-            resultList.add(new EndResult());
-        }
-
-        return resultList;
+    
+    @Override
+    public InputDeckQueryResult newQueryResult(AbstractQuery query, InputDeckEntity e) {
+        return new InputDeckQueryResult(query.getQueryKey(), e.getXmin(), e.getAggregateKey(), e.getAggregateVersion(), e.getEntityCreationTime(),
+            e.getInputDeckName(), e.getInputDeckFile());
     }
 
     @Override
@@ -342,5 +273,4 @@ public class InputDeckProjection extends KafkaDomainProjection {
 
         return writeChannels.domainQueryEventWriter();
     }
-
 }

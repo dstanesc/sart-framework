@@ -6,7 +6,15 @@ import org.junit.runners.Suite;
 //requires following services : SimulationApplicationBootstrap, ConflictResolutionApplicationBootstrap, InputDeckProjectionBootstrap
 
 @RunWith(Suite.class)
-@Suite.SuiteClasses({ SerializeTest.class, TransactionTest.class, ScalabilityTest.class, VersionTest.class })
+@Suite.SuiteClasses({ 
+    
+    SerializeTest.class, 
+    TransactionTest.class, 
+    ScalabilityTest.class, 
+    VersionTest.class, 
+    LatencyTest.class, 
+    BatchScalabilityTest.class, 
+    IsolationTest.class
+})
 
-public class ValidationSuite {
-}
+public class ValidationSuite {}

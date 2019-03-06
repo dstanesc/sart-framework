@@ -110,7 +110,7 @@ public class BatchScalabilityTest {
         LOGGER.info(" {} ->  chosen for query ", lastInputDeckName);
 
         rx.onStartQuery(true, new InputDeckByNameQuery(lastInputDeckName), InputDeckQueryResult.class,
-            r -> queryLock.complete(r));
+            r -> queryLock.complete(r)).start().commit();
 
         InputDeckQueryResult r = queryLock.get(30, TimeUnit.SECONDS);
 

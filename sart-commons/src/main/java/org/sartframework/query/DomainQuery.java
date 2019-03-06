@@ -3,6 +3,12 @@ package org.sartframework.query;
 import org.sartframework.session.SystemSnapshot;
 
 public interface DomainQuery {
+    
+    public final static int READ_UNCOMMITTED_ISOLATION = 1;
+    
+    public final static int READ_COMMITTED_ISOLATION = 2;
+    
+    public final static int READ_SNAPSHOT_ISOLATION = 4;
 
     boolean isQuerySubscription();
 

@@ -2,7 +2,6 @@ package org.sartframework.demo.cae;
 
 import static org.junit.Assert.fail;
 
-import java.util.Calendar;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,10 +22,10 @@ import org.sartframework.demo.cae.event.InputDeckCreatedEvent;
 import org.sartframework.demo.cae.event.InputDeckFileUpdatedEvent;
 import org.sartframework.demo.cae.query.InputDeckByNameQuery;
 import org.sartframework.demo.cae.result.InputDeckQueryResult;
-import org.sartframework.driver.RemoteConflictQueryApi;
-import org.sartframework.driver.RemoteTransactionDriver;
 import org.sartframework.driver.DomainTransaction;
+import org.sartframework.driver.RemoteConflictQueryApi;
 import org.sartframework.driver.RemoteTransactionApi;
+import org.sartframework.driver.RemoteTransactionDriver;
 import org.sartframework.driver.TransactionDriver;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
@@ -37,74 +36,10 @@ import org.sartframework.session.SystemSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransactionTest {
+public class TransactionTest extends AbstractCaeTest {
 
-    enum TestStatus {
-        ABORTED, COMMITTED
-    }
-
-    static class InputDeckMonitor {
-
-        Long commandCreationTime;
-
-        Long eventCreationTime;
-
-        Long entityCreationTime;
-        
-        Long queryReturnTime;
-        
-        Long resultCreationTime;
-
-        public Long getCommandCreationTime() {
-            return commandCreationTime;
-        }
-
-        public void setCommandCreationTime(Long commandCreationTime) {
-            this.commandCreationTime = commandCreationTime;
-        }
-
-        public Long getEventCreationTime() {
-            return eventCreationTime;
-        }
-
-        public void setEventCreationTime(Long eventCreationTime) {
-            this.eventCreationTime = eventCreationTime;
-        }
-
-        public Long getEntityCreationTime() {
-            return entityCreationTime;
-        }
-
-        public void setEntityCreationTime(Long entityCreationTime) {
-            this.entityCreationTime = entityCreationTime;
-        }
-
-        public Long getResultCreationTime() {
-            return resultCreationTime;
-        }
-
-        public void setResultCreationTime(Long resultCreationTime) {
-            this.resultCreationTime = resultCreationTime;
-        }
-
-        public Long getQueryReturnTime() {
-            return queryReturnTime;
-        }
-
-        public void setQueryReturnTime(Long queryReturnTime) {
-            this.queryReturnTime = queryReturnTime;
-        }
-
-    }
-    
     final static Logger LOGGER = LoggerFactory.getLogger(TransactionTest.class);
-
-    static AtomicInteger inputDeckCounter = new AtomicInteger(1);
-
-    static AtomicInteger resultCounter = new AtomicInteger(1);
     
-    static AtomicInteger fileCounter = new AtomicInteger(1);
-
     @Test
     public void testCommandSingle() throws Exception {
 
@@ -142,10 +77,8 @@ public class TransactionTest {
         String i = nextInputDeckIdentity();
 
         domainTransaction.executeCommand(() -> {
-
+            
             return new InputDeckCreateCommand(i, "input-deck-name-" + i, "input-deck-file-" + i);
-            // return new CreateInputDeck(i, "input-deck-name-" + i,
-            // "input-deck-file-" + i);
         });
 
         TestStatus status = completionLock.get(10, TimeUnit.SECONDS);
@@ -907,26 +840,5 @@ public class TransactionTest {
         LOGGER.info("Total latency = {} ms", totalLatency);
     }
     
-    protected InputDeckUpdateFileCommand buildInputDeckUpdateFileCommand(String id, long inputDeckVersion, String inputDeckFile) {
-        
-        return new InputDeckUpdateFileCommand(id, inputDeckVersion, inputDeckFile);
-    }
     
-    private String nextInputDeckIdentity() {
-        int i = inputDeckCounter.incrementAndGet();
-        long timeInMillis = Calendar.getInstance().getTimeInMillis();
-        return "ID_" + i + "_" + timeInMillis;
-    }
-
-    private String nextResultIdentity() {
-        int i = resultCounter.incrementAndGet();
-        long timeInMillis = Calendar.getInstance().getTimeInMillis();
-        return "R_" + i + "_" + timeInMillis;
-    }
-    
-    private String nextFileIdentity() {
-        int i = fileCounter.incrementAndGet();
-        long timeInMillis = Calendar.getInstance().getTimeInMillis();
-        return "FILE_" + i + "_" + timeInMillis;
-    }
 }

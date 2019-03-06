@@ -11,19 +11,20 @@ import org.sartframework.annotation.SynchHandlerDelegator;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.query.DomainQuery;
+import org.sartframework.result.QueryResult;
 
-public abstract class AnnotatedDomainProjection implements DomainProjection {
+public abstract class AnnotatedDomainProjection <P extends ProjectedEntity, R extends QueryResult> implements DomainProjection <P,R> {
 
-    final ArgumentTypeCollector<AnnotatedDomainProjection, DomainEventHandler> eventTypes;
+    final ArgumentTypeCollector<AnnotatedDomainProjection<?,?>, DomainEventHandler> eventTypes;
 
-    final ArgumentTypeCollector<AnnotatedDomainProjection, DomainQueryHandler> queryTypes;
+    final ArgumentTypeCollector<AnnotatedDomainProjection<?,?>, DomainQueryHandler> queryTypes;
 
     final Map<String, DomainQuery> subscriptions = new HashMap<>();
     
     public AnnotatedDomainProjection() {
         super();
-        eventTypes = ArgumentTypeCollector.<AnnotatedDomainProjection, DomainEventHandler> wrap(this, DomainEventHandler.class);
-        queryTypes = ArgumentTypeCollector.<AnnotatedDomainProjection, DomainQueryHandler> wrap(this, DomainQueryHandler.class);
+        eventTypes = ArgumentTypeCollector.<AnnotatedDomainProjection<?,?>, DomainEventHandler> wrap(this, DomainEventHandler.class);
+        queryTypes = ArgumentTypeCollector.<AnnotatedDomainProjection<?,?>, DomainQueryHandler> wrap(this, DomainQueryHandler.class);
     }
 
     @Override

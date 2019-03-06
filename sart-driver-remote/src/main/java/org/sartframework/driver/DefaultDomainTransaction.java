@@ -13,6 +13,7 @@ import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
+import org.sartframework.session.SystemSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,13 +22,13 @@ public class DefaultDomainTransaction implements DomainTransaction {
     final static Logger LOGGER = LoggerFactory.getLogger(DefaultDomainTransaction.class);
 
     private TransactionDriverInternal transactionDriverInternal;
-    
+
     private TransactionDriver transactionDriver;
 
     private Long xid;
 
     private Isolation isolation = Isolation.READ_SNAPSHOT;
-    
+
     AtomicInteger commandSequenceCounter = new AtomicInteger(0);
 
     public DefaultDomainTransaction(TransactionDriver transactionDriver, TransactionDriverInternal transactionDriverInternal) {
@@ -99,13 +100,14 @@ public class DefaultDomainTransaction implements DomainTransaction {
     }
 
     @Override
-    public <R, Q extends DomainQuery> DomainTransaction onStartQuery(boolean subscribe, Q domainQuery, Class<R> resultType, Consumer<R> resultConsumer) {
+    public <R, Q extends DomainQuery> DomainTransaction onStartQuery(boolean subscribe, Q domainQuery, Class<R> resultType,
+                                                                     Consumer<R> resultConsumer) {
 
         onStart(startEvent -> {
 
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
-            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), startEvent.getSystemSnapshot(), subscribe, domainQuery, resultType,
+            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType,
                 resultConsumer);
         });
 
@@ -113,13 +115,13 @@ public class DefaultDomainTransaction implements DomainTransaction {
     }
 
     @Override
-    public <R, Q extends DomainQuery> DomainTransaction onStartQuery(boolean subscribe, Q domainQuery, Class<R> resultType, Consumer<R> resultConsumer,
-                                                                Runnable onComplete) {
+    public <R, Q extends DomainQuery> DomainTransaction onStartQuery(boolean subscribe, Q domainQuery, Class<R> resultType,
+                                                                     Consumer<R> resultConsumer, Runnable onComplete) {
         onStart(startEvent -> {
 
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
-            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), startEvent.getSystemSnapshot(), subscribe, domainQuery, resultType,
+            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType,
                 resultConsumer, onComplete);
         });
 
@@ -127,17 +129,35 @@ public class DefaultDomainTransaction implements DomainTransaction {
     }
 
     @Override
-    public <R, Q extends DomainQuery> DomainTransaction onStartQuery(boolean subscribe, Q domainQuery, Class<R> resultType, Consumer<R> resultConsumer,
-                                                                Consumer<? super Throwable> errorConsumer, Runnable onComplete) {
+    public <R, Q extends DomainQuery> DomainTransaction onStartQuery(boolean subscribe, Q domainQuery, Class<R> resultType,
+                                                                     Consumer<R> resultConsumer, Consumer<? super Throwable> errorConsumer,
+                                                                     Runnable onComplete) {
         onStart(startEvent -> {
 
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
-            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), startEvent.getSystemSnapshot(), subscribe, domainQuery, resultType,
+            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType,
                 resultConsumer, errorConsumer, onComplete);
         });
 
         return this;
+    }
+
+    private SystemSnapshot getSystemSnapshot(TransactionStartedEvent startEvent) {
+        switch (getIsolation()) {
+            case READ_UNCOMMITTED:
+                return null;
+            case READ_SNAPSHOT:
+                return startEvent.getSystemSnapshot();
+            case READ_COMMITTED:
+                try {
+                    return getTransactionDriver().snapshotTransactionInternal(getXid());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            default:
+                throw new IllegalStateException("Unsupported isolation level : " + getIsolation());
+        }
     }
 
     @Override
@@ -174,9 +194,9 @@ public class DefaultDomainTransaction implements DomainTransaction {
     public DomainTransaction commit() {
 
         try {
-            
+
             LOGGER.info("Committing xid={} ", getXid());
-            
+
             getTransactionDriver().commitTransactionInternal(getXid(), getCommandSequenceCounter().get());
 
             return this;
@@ -204,11 +224,11 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
     @Override
     public DomainTransaction appendCommand(Supplier<? extends DomainCommand> commandSupplier) {
-        
+
         int xcs = getCommandSequenceCounter().incrementAndGet();
-        
+
         DomainCommand domainCommand = commandSupplier.get();
-        
+
         LOGGER.info("Appending xid={} xcs={} command={} ", getXid(), xcs, domainCommand);
 
         domainCommand.setXid(getXid());

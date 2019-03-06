@@ -3,6 +3,11 @@ package org.sartframework.session;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+//https://github.com/FasterXML/jackson-annotations
+
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SystemSnapshot {
     
     Long timestamp;

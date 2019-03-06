@@ -24,17 +24,13 @@ import org.sartframework.driver.TransactionDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ScalabilityTest {
+public class ScalabilityTest extends AbstractCaeTest {
 
     private static final String INPUT_DECK_FILE_PREFIX = "input-deck-file-";
 
     private static final String INPUT_DECK_NAME_PREFIX = "input-deck-name-";
 
     final static Logger LOGGER = LoggerFactory.getLogger(ScalabilityTest.class);
-
-    enum TestStatus {
-        ABORTED, COMMITTED
-    }
 
     class MutableValue<T> {
 
@@ -136,11 +132,5 @@ public class ScalabilityTest {
 
     protected String buildInputDeckName(String id) {
         return INPUT_DECK_NAME_PREFIX + id;
-    }
-
-    private String nextInputDeckIdentity() {
-        int i = inputDeckCounter.incrementAndGet();
-        long timeInMillis = Calendar.getInstance().getTimeInMillis();
-        return "ID_" + i + "_" + timeInMillis;
     }
 }

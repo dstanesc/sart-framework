@@ -103,5 +103,4 @@ public class InputDeckQueryResult implements QueryResult {
     public void setEntityCreationTime(long entityCreationTime) {
         this.entityCreationTime = entityCreationTime;
     }
-
 }
