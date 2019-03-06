@@ -5,9 +5,7 @@
 
 ```bash
 mkdir ~/kafka && cd ~/kafka
-```
 
-```bash
 curl "http://www.apache.org/dist/kafka/2.1.0/kafka_2.11-2.1.0.tgz" -o ~/kafka/kafka.tgz
 
 tar xvzf ~/kafka/kafka.tgz --strip 1
@@ -15,7 +13,7 @@ tar xvzf ~/kafka/kafka.tgz --strip 1
 
 #### Install SART
 ```bash
-git clone sart-framework //TODO repo
+git clone https://github.com/dstanesc/sart-framework.git
 ```
 
 #### Start Zookeeper
@@ -35,7 +33,7 @@ Terminal 1
 ```bash
 cd ~/sart-framework
 
-./gradlew :sart-cae:bootRun
+./gradlew :sart-cae-transaction:bootRun
 
 ```
 
@@ -59,7 +57,7 @@ cd ~/sart-framework
 ```bash
 cd ~/sart-framework
 
-./gradlew :sart-cae-kafka:test --tests org.sartframework.demo.cae.TransactionTest  
+./gradlew :sart-cae-transaction:test --tests org.sartframework.demo.cae.ValidationSuite  
 ```
 
 
