@@ -1,7 +1,6 @@
 package org.sartframework.annotation;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
@@ -34,8 +33,6 @@ public class ArgumentTypeCollector <T, A extends Annotation> {
     public ArgumentTypeCollector<T, A>  collect() {
         
         Class<? extends Object> beanClass = target.getClass();
-        
-        Method found = null;
         
         for (final Method method : beanClass.getDeclaredMethods()) {
 

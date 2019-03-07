@@ -11,7 +11,7 @@ public abstract class KafkaDomainProjection<P extends ProjectedEntity, R extends
 
     public abstract <Q extends DomainQuery> KafkaTemplate<String, Q> getQueryWriter();
 
-    public abstract <R extends QueryResult> KafkaTemplate<String, R> getQueryResultWriter();
+    public abstract KafkaTemplate<String, R> getQueryResultWriter();
 
     public abstract <E extends QueryEvent> KafkaTemplate<String, E> getQueryEventWriter();
 

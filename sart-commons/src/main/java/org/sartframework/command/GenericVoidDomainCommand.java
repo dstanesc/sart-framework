@@ -1,6 +1,6 @@
 package org.sartframework.command;
 
-public class GenericVoidDomainCommand extends GenericDomainCommand implements VoidDomainCommand {
+public class GenericVoidDomainCommand extends GenericDomainCommand<GenericVoidDomainCommand> implements VoidDomainCommand {
 
     public GenericVoidDomainCommand() {
        

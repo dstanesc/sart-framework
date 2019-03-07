@@ -66,6 +66,7 @@ public class SerializationTest {
 
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void test1() {
         ProtoSerializer<FooCmd> ser = new ProtoSerializer<FooCmd>();

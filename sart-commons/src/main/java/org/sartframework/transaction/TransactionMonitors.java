@@ -1,7 +1,6 @@
 package org.sartframework.transaction;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;

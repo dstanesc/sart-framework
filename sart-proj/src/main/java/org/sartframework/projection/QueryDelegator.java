@@ -6,10 +6,11 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.sartframework.query.DomainQuery;
+import org.sartframework.result.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class QueryDelegator<A extends Annotation> implements QueryHandler {
+public class QueryDelegator<A extends Annotation, R extends QueryResult> implements QueryHandler<R> {
 
     final static Logger LOGGER = LoggerFactory.getLogger(QueryDelegator.class);
 
@@ -23,14 +24,15 @@ public class QueryDelegator<A extends Annotation> implements QueryHandler {
         this.annotationClass = annotationClass;
     }
 
-    public static <A extends Annotation> QueryDelegator<A> wrap(Object target, Class<A> annotationClass) {
+    public static <A extends Annotation, R extends QueryResult> QueryDelegator<A, R> wrap(Object target, Class<A> annotationClass) {
 
-        return new QueryDelegator<A>(target, annotationClass);
+        return new QueryDelegator<A,R>(target, annotationClass);
     }
 
+    
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends DomainQuery, R> List<R> handleQuery(T domainQuery) {
+    public <T extends DomainQuery> List<R> handleQuery(T domainQuery) {
 
         Class<? extends Object> queryClass = domainQuery.getClass();
 

@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public interface DomainProjection<P extends ProjectedEntity, R extends QueryResult>
-    extends SynchHandler<DomainEvent<? extends DomainCommand>, Long>, QueryHandler, ProjectionConfiguration {
+    extends SynchHandler<DomainEvent<? extends DomainCommand>, Long>, QueryHandler<R>, ProjectionConfiguration {
 
     final static Logger LOGGER = LoggerFactory.getLogger(DomainProjection.class);
 
@@ -31,12 +31,12 @@ public interface DomainProjection<P extends ProjectedEntity, R extends QueryResu
 
     <Q extends DomainQuery> void unsubscribe(String queryKey);
 
-    default <P extends ProjectedEntity> List<P> filterVisibility(DomainQuery domainQuery, List<P> entityList) {
+    default List<P> filterVisibility(DomainQuery domainQuery, List<P> entityList) {
 
         int isolation = domainQuery.getIsolation();
 
         SystemSnapshot systemSnapshot = domainQuery.getSystemSnapshot();
-        
+
         if (isolation == DomainQuery.READ_UNCOMMITTED_ISOLATION
             || systemSnapshot.isEmpty() /* first transaction in the system */)
             return entityList.stream().filter(entity -> {

@@ -31,6 +31,7 @@ public class DomainCommandProcessor implements Processor<String, DomainCommand>{
         this.businessTransactionManager = businessTransactionManager;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void init(ProcessorContext context) {
    

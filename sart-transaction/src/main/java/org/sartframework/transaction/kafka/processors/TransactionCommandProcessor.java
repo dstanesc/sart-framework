@@ -8,7 +8,6 @@ import org.sartframework.command.transaction.TransactionCommand;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.transaction.BusinessTransactionManager;
 import org.sartframework.transaction.kafka.KafkaTransactionAggregate;
-import org.sartframework.transaction.kafka.services.DomainCommandService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ public class TransactionCommandProcessor implements Processor<Long, TransactionC
         this.businessTransactionManager = businessTransactionManager;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void init(ProcessorContext context) {
 

@@ -27,6 +27,7 @@ public class SynchHandlerDelegator <T, A extends Annotation, R> implements Synch
         return new SynchHandlerDelegator<T, A, R>(target, annotationClass);
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     public R handle(T t) {
         

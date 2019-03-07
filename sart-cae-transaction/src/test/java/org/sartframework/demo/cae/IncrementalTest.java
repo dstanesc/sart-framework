@@ -92,6 +92,7 @@ public class IncrementalTest {
     }
     
    //@Test
+    @SuppressWarnings("unused")
     public void testQueryInputDeckProjectionSyntax2() throws Exception {
 
         TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
@@ -212,17 +213,5 @@ public class IncrementalTest {
         int i = inputDeckCounter.incrementAndGet();
         long timeInMillis = Calendar.getInstance().getTimeInMillis();
         return "ID_" + i + "_" + timeInMillis;
-    }
-
-    private String nextResultIdentity() {
-        int i = resultCounter.incrementAndGet();
-        long timeInMillis = Calendar.getInstance().getTimeInMillis();
-        return "R_" + i + "_" + timeInMillis;
-    }
-
-    private String nextFileIdentity() {
-        int i = fileCounter.incrementAndGet();
-        long timeInMillis = Calendar.getInstance().getTimeInMillis();
-        return "FILE_" + i + "_" + timeInMillis;
     }
 }

@@ -3,7 +3,6 @@ package org.sartframework.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.embedded.netty.NettyReactiveWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
-import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.stereotype.Component;
 
 @Component

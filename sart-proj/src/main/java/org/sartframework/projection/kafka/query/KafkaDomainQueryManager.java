@@ -20,9 +20,9 @@ public class KafkaDomainQueryManager implements QueryManager {
 
     final private SartKafkaConfiguration kafkaStreamsConfiguration;
     
-    final KafkaDomainProjection domainProjection;
+    final KafkaDomainProjection<?,?> domainProjection;
 
-    public KafkaDomainQueryManager(SartKafkaConfiguration kafkaConfiguration, KafkaDomainProjection domainProjection) {
+    public KafkaDomainQueryManager(SartKafkaConfiguration kafkaConfiguration, KafkaDomainProjection<?,?> domainProjection) {
         super();
         this.kafkaStreamsConfiguration = kafkaConfiguration;
         this.domainProjection = domainProjection;

@@ -252,6 +252,7 @@ public class TransactionTest extends AbstractCaeTest {
 
     }
     
+    @SuppressWarnings("unused")
     @Test
     public void testAbortCreation() throws Exception {
 
@@ -314,6 +315,7 @@ public class TransactionTest extends AbstractCaeTest {
     }
 
     
+    @SuppressWarnings("unused")
     @Test
     public void testAbortCreationMultipleUpdates() throws Exception {
 
@@ -389,6 +391,7 @@ public class TransactionTest extends AbstractCaeTest {
     }
 
     
+    @SuppressWarnings("unused")
     @Test
     public void testAbortCreationMultipleUpdates2() throws Exception {
 
@@ -463,6 +466,7 @@ public class TransactionTest extends AbstractCaeTest {
         Boolean completed = queryCompletionLock.get(10, TimeUnit.SECONDS);
     }
     
+    @SuppressWarnings("unused")
     @Test
     public void testAbort() throws Exception {
 
@@ -633,6 +637,7 @@ public class TransactionTest extends AbstractCaeTest {
         Assert.assertTrue(systemSnapshot.getHighestCommitted() <= wx.getXid());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testQueryInputDeckProjectionSyntax2() throws Exception {
 

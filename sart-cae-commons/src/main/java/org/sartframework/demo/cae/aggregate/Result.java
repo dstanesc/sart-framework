@@ -2,8 +2,6 @@ package org.sartframework.demo.cae.aggregate;
 
 public class Result {
 
-    private static final long serialVersionUID = -8464144369855776690L;
-
     String resultId;
 
     String resultName;

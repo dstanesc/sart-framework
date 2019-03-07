@@ -20,7 +20,6 @@ import org.sartframework.event.transaction.ProgressLoggedEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.kafka.serializers.SartSerdes;
 import org.sartframework.service.ManagedService;
-import org.sartframework.transaction.kafka.KafkaBusinessTransactionManager;
 import org.sartframework.transaction.kafka.PartitionOffset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,10 +179,6 @@ public class TransactionRollbackService implements ManagedService<TransactionRol
         return this;
     }
 
-    private void dispatch(CompensateDomainEventCommand compensateCommand) {
-
-        KafkaBusinessTransactionManager.get().publish(compensateCommand);
-    }
 
     @Override
     public TransactionRollbackService stop() {

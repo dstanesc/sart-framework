@@ -5,7 +5,7 @@ import org.sartframework.event.DomainEvent;
 import org.sartframework.event.GenericDomainEvent;
 import org.sartframework.event.TransactionEvent;
 
-public class DomainEventCompensatedEvent extends GenericDomainEvent implements TransactionEvent {
+public class DomainEventCompensatedEvent extends GenericDomainEvent<DomainCommand> implements TransactionEvent {
 
     DomainEvent<? extends DomainCommand> domainEvent;
     

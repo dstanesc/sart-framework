@@ -50,6 +50,7 @@ public class SerializeTest {
         }
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void serializationTest1() throws Exception {
 
@@ -65,6 +66,7 @@ public class SerializeTest {
         Assert.assertEquals(7, d.getA());
     }
 
+    @SuppressWarnings("resource")
     @Test
     public void serializationTest2() throws Exception {
 

@@ -1,9 +1,7 @@
 package org.sartframework.demo.cae;
 
-import java.util.Calendar;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.Test;

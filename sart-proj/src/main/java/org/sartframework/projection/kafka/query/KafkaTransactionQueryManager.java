@@ -7,6 +7,7 @@ import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.projection.kafka.services.QueryResultListenerService;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.query.QueryManager;
+import org.sartframework.result.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +21,9 @@ public class KafkaTransactionQueryManager implements QueryManager {
 
     final private SartKafkaConfiguration kafkaStreamsConfiguration;
 
-    final KafkaTransactionProjection transactionProjection;
+    final KafkaTransactionProjection<? extends QueryResult> transactionProjection;
 
-    public KafkaTransactionQueryManager(SartKafkaConfiguration kafkaConfiguration, KafkaTransactionProjection transactionProjection) {
+    public KafkaTransactionQueryManager(SartKafkaConfiguration kafkaConfiguration, KafkaTransactionProjection<? extends QueryResult> transactionProjection) {
         super();
         this.kafkaStreamsConfiguration = kafkaConfiguration;
         this.transactionProjection = transactionProjection;

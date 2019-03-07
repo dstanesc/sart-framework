@@ -1,7 +1,6 @@
 package org.sartframework.event.transaction;
 
 import org.sartframework.command.transaction.TransactionStatus;
-import org.sartframework.command.transaction.TransactionStatus.Status;
 import org.sartframework.event.GenericEvent;
 import org.sartframework.event.TransactionEvent;
 

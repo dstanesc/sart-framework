@@ -20,13 +20,13 @@ public class DomainProjectionManagementService<T> implements ManagedService<Doma
 
     final static Logger LOGGER = LoggerFactory.getLogger(DomainProjectionManagementService.class);
 
-    final KafkaDomainProjection projection;
+    final KafkaDomainProjection<?,?> projection;
 
     final SartKafkaConfiguration kafkaStreamsConfiguration;
 
     KafkaStreams kafkaStreams;
 
-    public DomainProjectionManagementService(KafkaDomainProjection projection, SartKafkaConfiguration kafkaStreamsConfiguration) {
+    public DomainProjectionManagementService(KafkaDomainProjection<?,?> projection, SartKafkaConfiguration kafkaStreamsConfiguration) {
         super();
         this.projection = projection;
         this.kafkaStreamsConfiguration = kafkaStreamsConfiguration;
@@ -78,7 +78,7 @@ public class DomainProjectionManagementService<T> implements ManagedService<Doma
 
             })
 
-            .to(projection.getQueryResultTopic(), Produced.<String, Object> with(Serdes.String(), SartSerdes.Proto()));
+            .to(projection.getQueryResultTopic(), Produced.with(Serdes.String(), SartSerdes.Proto()));
 
         Topology projectionTopology = builder.build();
 

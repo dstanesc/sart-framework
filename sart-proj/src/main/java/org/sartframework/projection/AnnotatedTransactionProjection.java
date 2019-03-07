@@ -10,19 +10,20 @@ import org.sartframework.annotation.DomainEventHandler;
 import org.sartframework.annotation.DomainQueryHandler;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.query.DomainQuery;
+import org.sartframework.result.QueryResult;
 
-public abstract class AnnotatedTransactionProjection implements TransactionProjection {
+public abstract class AnnotatedTransactionProjection<R extends QueryResult> implements TransactionProjection<R> {
 
-    final ArgumentTypeCollector<AnnotatedTransactionProjection, DomainEventHandler> eventTypes;
+    final ArgumentTypeCollector<AnnotatedTransactionProjection<R>, DomainEventHandler> eventTypes;
 
-    final ArgumentTypeCollector<AnnotatedTransactionProjection, DomainQueryHandler> queryTypes;
+    final ArgumentTypeCollector<AnnotatedTransactionProjection<R>, DomainQueryHandler> queryTypes;
 
     final Map<String, DomainQuery> subscriptions = new HashMap<>();
 
     public AnnotatedTransactionProjection() {
         super();
-        this.eventTypes = ArgumentTypeCollector.<AnnotatedTransactionProjection, DomainEventHandler> wrap(this, DomainEventHandler.class);
-        this.queryTypes = ArgumentTypeCollector.<AnnotatedTransactionProjection, DomainQueryHandler> wrap(this, DomainQueryHandler.class);
+        this.eventTypes = ArgumentTypeCollector.<AnnotatedTransactionProjection<R>, DomainEventHandler> wrap(this, DomainEventHandler.class);
+        this.queryTypes = ArgumentTypeCollector.<AnnotatedTransactionProjection<R>, DomainQueryHandler> wrap(this, DomainQueryHandler.class);
 
     }
 
@@ -34,14 +35,14 @@ public abstract class AnnotatedTransactionProjection implements TransactionProje
     }
 
     @Override
-    public <Q extends DomainQuery, R> List<R> handleQuery(Q domainQuery) {
+    public <Q extends DomainQuery> List<R> handleQuery(Q domainQuery) {
 
         if (domainQuery.isQuerySubscription()) {
 
             subscriptions.put(domainQuery.getQueryKey(), domainQuery);
         }
 
-        return QueryDelegator.<DomainQueryHandler> wrap(this, DomainQueryHandler.class).handleQuery(domainQuery);
+        return QueryDelegator.<DomainQueryHandler, R> wrap(this, DomainQueryHandler.class).handleQuery(domainQuery);
     }
 
     @Override

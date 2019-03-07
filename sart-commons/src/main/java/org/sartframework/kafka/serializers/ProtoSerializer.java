@@ -19,6 +19,7 @@ public class ProtoSerializer<T> implements Serializer<T>, Deserializer<T> {
 
     public final static Schema<GenericSerialized> GENERIC_SCHEMA = RuntimeSchema.getSchema(GenericSerialized.class);
 
+    @SuppressWarnings("unchecked")
     @Override
     public T deserialize(String topic, byte[] data) {
 

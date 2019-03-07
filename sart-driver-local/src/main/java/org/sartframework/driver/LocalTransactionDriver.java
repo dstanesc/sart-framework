@@ -265,6 +265,7 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
         progressFlux.subscribe(conflictConsumer);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends DomainEvent<? extends DomainCommand>> void onProgress(Consumer<T> progressConsumer, Class<T> eventType, long xid) {
 
@@ -280,6 +281,7 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
         progressFlux.subscribe(progressConsumer);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends DomainEvent<? extends DomainCommand>> void onCompensate(Consumer<T> compensateConsumer, Class<T> eventType, long xid) {
 
@@ -346,8 +348,6 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
         Optional<CommandLocalApi> apiOptional = commandApis.stream().filter(api -> api.hasCommandSupport(commandType)).findFirst();
 
         if (apiOptional.isPresent()) {
-
-            CommandLocalApi remoteApi = apiOptional.get();
 
             writeChannels.domainCommandWriter().sendDefault(domainCommand.getAggregateKey(), domainCommand);
 

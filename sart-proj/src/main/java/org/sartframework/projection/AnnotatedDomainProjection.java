@@ -34,14 +34,14 @@ public abstract class AnnotatedDomainProjection <P extends ProjectedEntity, R ex
     }
 
     @Override
-    public <Q extends DomainQuery, R> List<R> handleQuery(Q domainQuery) {
+    public <Q extends DomainQuery> List<R> handleQuery(Q domainQuery) {
 
         if (domainQuery.isQuerySubscription()) {
             
             subscriptions.put(domainQuery.getQueryKey(), domainQuery);
         }
         
-        return QueryDelegator.<DomainQueryHandler> wrap(this, DomainQueryHandler.class).handleQuery(domainQuery);
+        return QueryDelegator.<DomainQueryHandler, R> wrap(this, DomainQueryHandler.class).handleQuery(domainQuery);
     }
 
     @Override

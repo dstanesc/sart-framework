@@ -1,8 +1,5 @@
 package org.sartframework.demo.cae.result;
 
-import java.io.Serializable;
-import java.time.Instant;
-
 import org.sartframework.result.QueryResult;
 
 public class InputDeckQueryResult implements QueryResult {

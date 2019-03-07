@@ -69,7 +69,7 @@ public class IsolationTest extends AbstractCaeTest {
 
         try {
 
-            InputDeckQueryResult inputDeck = queryLock.get(10, TimeUnit.SECONDS);
+            queryLock.get(10, TimeUnit.SECONDS);
 
             throw new RuntimeException("Should fail before w/ TimeoutException");
 
@@ -125,7 +125,7 @@ public class IsolationTest extends AbstractCaeTest {
 
         try {
 
-            InputDeckQueryResult inputDeck = queryLock.get(10, TimeUnit.SECONDS);
+            queryLock.get(10, TimeUnit.SECONDS);
 
             throw new RuntimeException("Should fail before w/ TimeoutException");
 

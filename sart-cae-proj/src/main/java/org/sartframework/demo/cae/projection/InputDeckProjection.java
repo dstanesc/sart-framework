@@ -41,7 +41,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
 
     private final InputDeckRepository inputDeckRepository;
 
-    private final QueryResultsEmitter queryResultsEmitter;
+    private final QueryResultsEmitter<InputDeckQueryResult> queryResultsEmitter;
 
     public InputDeckProjection(KafkaWriters writeChannels, SartKafkaConfiguration kafkaStreamsConfiguration,
                                InputDeckRepository inputDeckRepository) {
@@ -49,7 +49,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
         this.writeChannels = writeChannels;
         this.kafkaStreamsConfiguration = kafkaStreamsConfiguration;
         this.inputDeckRepository = inputDeckRepository;
-        this.queryResultsEmitter = new KafkaDomainQueryResultsEmitter(this);
+        this.queryResultsEmitter = new KafkaDomainQueryResultsEmitter<InputDeckQueryResult>(this);
     }
 
     @DomainEventHandler
@@ -263,7 +263,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
     }
 
     @Override
-    public <R extends QueryResult> KafkaTemplate<String, R> getQueryResultWriter() {
+    public  KafkaTemplate<String, InputDeckQueryResult> getQueryResultWriter() {
 
         return writeChannels.domainQueryResultWriter();
     }

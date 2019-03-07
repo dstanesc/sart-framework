@@ -301,6 +301,14 @@ public abstract class GenericTransactionAggregate implements AsynchHandler<Trans
     public void setOffset(long offset) {
         this.offset = offset;
     }
+    
+    public int getIsolation() {
+        return isolation;
+    }
+
+    public void setIsolation(int isolation) {
+        this.isolation = isolation;
+    }
 
     protected void incrementProgress(DomainEvent<? extends DomainCommand> atomicEvent) {
 

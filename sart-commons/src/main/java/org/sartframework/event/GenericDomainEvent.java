@@ -1,7 +1,5 @@
 package org.sartframework.event;
 
-import java.time.Instant;
-
 import org.sartframework.command.DomainCommand;
 
 public abstract class GenericDomainEvent<C extends DomainCommand> extends GenericEvent implements DomainEvent<C> {

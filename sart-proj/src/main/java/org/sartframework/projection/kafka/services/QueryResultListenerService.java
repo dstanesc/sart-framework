@@ -45,6 +45,7 @@ public class QueryResultListenerService<T> implements ManagedService<QueryResult
         return domainQuery;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public QueryResultListenerService<T> start() {
 

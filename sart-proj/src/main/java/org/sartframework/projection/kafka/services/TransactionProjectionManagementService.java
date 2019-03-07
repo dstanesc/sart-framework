@@ -14,6 +14,7 @@ import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.kafka.serializers.SartSerdes;
 import org.sartframework.projection.kafka.query.KafkaTransactionProjection;
 import org.sartframework.query.DomainQuery;
+import org.sartframework.result.QueryResult;
 import org.sartframework.service.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +23,13 @@ public class TransactionProjectionManagementService<T> implements ManagedService
 
     final static Logger LOGGER = LoggerFactory.getLogger(TransactionProjectionManagementService.class);
 
-    final KafkaTransactionProjection transactionProjection;
+    final KafkaTransactionProjection<? extends QueryResult> transactionProjection;
 
     final SartKafkaConfiguration kafkaStreamsConfiguration;
 
     KafkaStreams kafkaStreams;
 
-    public TransactionProjectionManagementService(KafkaTransactionProjection projection, SartKafkaConfiguration kafkaStreamsConfiguration) {
+    public TransactionProjectionManagementService(KafkaTransactionProjection<? extends QueryResult> projection, SartKafkaConfiguration kafkaStreamsConfiguration) {
         super();
         this.transactionProjection = projection;
         this.kafkaStreamsConfiguration = kafkaStreamsConfiguration;
@@ -81,7 +82,7 @@ public class TransactionProjectionManagementService<T> implements ManagedService
 
             })
 
-            .to(transactionProjection.getQueryResultTopic(), Produced.<String, Object> with(Serdes.String(), SartSerdes.Proto()));
+            .to(transactionProjection.getQueryResultTopic(), Produced.with(Serdes.String(), SartSerdes.Proto()));
         
         
         builder.stream(transactionProjection.getQueryEventTopic(), Consumed.<String, QueryEvent> with(Serdes.String(), SartSerdes.Proto()))

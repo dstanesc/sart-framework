@@ -1,8 +1,5 @@
 package org.sartframework.query;
 
-import static org.sartframework.query.QueryVariables.of;
-import static org.sartframework.query.QueryVariables.variable;
-
 public class ConflictsByAggregateQuery extends AbstractQuery {
 
     String aggregateKey;

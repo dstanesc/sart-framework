@@ -30,7 +30,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ConflictResolutionProjection extends KafkaTransactionProjection {
+public class ConflictResolutionProjection extends KafkaTransactionProjection <ConflictResolvedResult>{
 
     final static Logger LOGGER = LoggerFactory.getLogger(ConflictResolutionProjection.class);
 
@@ -40,7 +40,7 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection {
 
     private final ConflictResolutionRepository repository;
 
-    final QueryResultsEmitter queryResultsEmitter;
+    final QueryResultsEmitter<ConflictResolvedResult> queryResultsEmitter;
 
     @Autowired
     public ConflictResolutionProjection(KafkaWriters writeChannels, SartKafkaConfiguration kafkaStreamsConfiguration,
@@ -49,7 +49,7 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection {
         this.writeChannels = writeChannels;
         this.kafkaStreamsConfiguration = kafkaStreamsConfiguration;
         this.repository = repository;
-        this.queryResultsEmitter = new KafkaTransactionQueryResultsEmitter(this);
+        this.queryResultsEmitter = new KafkaTransactionQueryResultsEmitter<ConflictResolvedResult>(this);
 
     }
 
@@ -165,7 +165,7 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection {
     }
 
     @Override
-    public <R extends QueryResult> KafkaTemplate<String, R> getQueryResultWriter() {
+    public KafkaTemplate<String, ConflictResolvedResult> getQueryResultWriter() {
 
         return writeChannels.conflictQueryResultWriter();
     }
