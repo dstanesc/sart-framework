@@ -155,19 +155,19 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection <Co
     @Override
     public KafkaTemplate<String, DomainQuery> getQueryWriter() {
 
-        return writeChannels.conflictQueryWriter();
+        return writeChannels.getConflictQueryWriter();
     }
 
     @Override
     public <E extends QueryEvent> KafkaTemplate<String, E> getQueryEventWriter() {
 
-        return writeChannels.conflictQueryEventWriter();
+        return writeChannels.getConflictQueryEventWriter();
     }
 
     @Override
     public KafkaTemplate<String, ConflictResolvedResult> getQueryResultWriter() {
 
-        return writeChannels.conflictQueryResultWriter();
+        return writeChannels.getConflictQueryResultWriter();
     }
 
 }

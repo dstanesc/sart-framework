@@ -326,12 +326,12 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
             resultListenerService.getResultPublisher().subscribe(resultConsumer);
 
             // FIXME get topic from projection
-            writeChannels.domainQueryWriter().sendDefault(domainQuery.getQueryKey(), domainQuery);
+            writeChannels.getDomainQueryWriter().sendDefault(domainQuery.getQueryKey(), domainQuery);
 
             resultListenerService.getResultPublisher().doAfterTerminate(() -> {
 
                 // FIXME get topic from projection
-                writeChannels.domainQueryEventWriter().sendDefault(queryKey, new QueryUnsubscribedEvent(queryKey));
+                writeChannels.getDomainQueryEventWriter().sendDefault(queryKey, new QueryUnsubscribedEvent(queryKey));
 
                 resultListenerService.stop();
             });
@@ -349,7 +349,7 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
 
         if (apiOptional.isPresent()) {
 
-            writeChannels.domainCommandWriter().sendDefault(domainCommand.getAggregateKey(), domainCommand);
+            writeChannels.getDomainCommandWriter().sendDefault(domainCommand.getAggregateKey(), domainCommand);
 
         } else
             throw new UnsupportedOperationException("Unsupported command " + domainCommand);

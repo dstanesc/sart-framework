@@ -86,7 +86,8 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
         long xid = transactionSequence.next();
         
         //should we better have an explicit dependency on creating monitors before start instead of time sequence
-        completeListener(xid).doOnTerminate(() -> {
+        completeListener(xid).subscribe( c -> {
+            
             unregisterTransactionMonitors(xid);
         });
         
@@ -166,7 +167,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
 
         CreateTransactionCommand createTransactionCommand = new CreateTransactionCommand(xid);
 
-        writeChannels.transactionCommandWriter().sendDefault(xid, createTransactionCommand);
+        writeChannels.getTransactionCommandWriter().sendDefault(xid, createTransactionCommand);
     }
 
     @Override
@@ -180,7 +181,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
         
         StartTransactionCommand startTransactionCommand = new StartTransactionCommand(xid, isolation, systemSnapshot);
 
-        writeChannels.transactionCommandWriter().sendDefault(xid, startTransactionCommand);
+        writeChannels.getTransactionCommandWriter().sendDefault(xid, startTransactionCommand);
     }
     
 
@@ -191,7 +192,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
 
         CommitTransactionCommand commitTransactionCommand = new CommitTransactionCommand(xid, xct);
 
-        writeChannels.transactionCommandWriter().sendDefault(xid, commitTransactionCommand);
+        writeChannels.getTransactionCommandWriter().sendDefault(xid, commitTransactionCommand);
     }
 
     @Override
@@ -199,7 +200,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
 
         AbortTransactionCommand abortTransactionCommand = new AbortTransactionCommand(xid);
 
-        writeChannels.transactionCommandWriter().sendDefault(xid, abortTransactionCommand);
+        writeChannels.getTransactionCommandWriter().sendDefault(xid, abortTransactionCommand);
 
         LOGGER.info("abortTransaction {} {}", xid, abortTransactionCommand);
 
@@ -210,7 +211,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
 
         LOGGER.info("publish domain command {} {}, xid={}", domainCommand.getAggregateKey(), domainCommand, domainCommand.getXid());
 
-        writeChannels.domainCommandWriter().sendDefault(domainCommand.getAggregateKey(), domainCommand);
+        writeChannels.getDomainCommandWriter().sendDefault(domainCommand.getAggregateKey(), domainCommand);
     }
 
     @Override
@@ -218,7 +219,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
 
         LOGGER.info("publish domain event {} {}, xid={}", domainEvent.getAggregateKey(), domainEvent, domainEvent.getXid());
 
-        writeChannels.domainEventWriter().sendDefault(domainEvent.getAggregateKey(), domainEvent);
+        writeChannels.getDomainEventWriter().sendDefault(domainEvent.getAggregateKey(), domainEvent);
     }
 
     @Override
@@ -226,7 +227,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
 
         LOGGER.info("publish transaction command xid={} {}", transactionCommand.getXid(), transactionCommand);
 
-        writeChannels.transactionCommandWriter().sendDefault(transactionCommand.getXid(), transactionCommand);
+        writeChannels.getTransactionCommandWriter().sendDefault(transactionCommand.getXid(), transactionCommand);
     }
 
     @Override
@@ -234,7 +235,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
 
         LOGGER.info("publish transaction event xid={} {}", transactionEvent.getXid(), transactionEvent);
 
-        writeChannels.transactionEventWriter().sendDefault(transactionEvent.getXid(), transactionEvent);
+        writeChannels.getTransactionEventWriter().sendDefault(transactionEvent.getXid(), transactionEvent);
     }
     
 //    public TransactionMonitors createTransactionMonitors(long xid) {   

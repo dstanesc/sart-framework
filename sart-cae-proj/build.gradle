@@ -14,8 +14,8 @@ dependencies {
 	    implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
         implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
 	 
+	    runtime("io.netty:netty-transport-native-epoll:$nettyNativeEpollVersion:$nettyNativeEpollClassifier")
 	    runtime ("com.h2database:h2:$h2dbVersion")
-	    
 	    runtime("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonDatatypeVersion")
 	    
 }

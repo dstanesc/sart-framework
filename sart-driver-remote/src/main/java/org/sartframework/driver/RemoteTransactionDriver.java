@@ -379,7 +379,7 @@ public class RemoteTransactionDriver implements TransactionDriverInternal, Trans
                 String status = request.connectTimeout(100000).socketTimeout(100000).addHeader("Content-Type", "application/json")
                     .bodyString(payload, ContentType.APPLICATION_JSON).execute().returnContent().asString();
 
-                LOGGER.info(status);
+                LOGGER.info("Send command returned : " + status);
             } catch (IOException e) {
 
                 throw new RuntimeException(e);

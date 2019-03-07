@@ -259,18 +259,18 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
     @Override
     public KafkaTemplate<String, DomainQuery> getQueryWriter() {
 
-        return writeChannels.domainQueryWriter();
+        return writeChannels.getDomainQueryWriter();
     }
 
     @Override
     public  KafkaTemplate<String, InputDeckQueryResult> getQueryResultWriter() {
 
-        return writeChannels.domainQueryResultWriter();
+        return writeChannels.getDomainQueryResultWriter();
     }
 
     @Override
     public <E extends QueryEvent> KafkaTemplate<String, E> getQueryEventWriter() {
 
-        return writeChannels.domainQueryEventWriter();
+        return writeChannels.getDomainQueryEventWriter();
     }
 }

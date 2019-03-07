@@ -93,4 +93,5 @@ public class LatencyTest extends AbstractCaeTest {
 
         LOGGER.info("Total latency = {} ms", totalLatency);
     }
+    
 }

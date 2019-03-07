@@ -14,11 +14,9 @@ dependencies {
         implementation("org.apache.kafka:kafka-streams:$kafkaStreamsVersion")
         implementation("org.springframework.kafka:spring-kafka:$springKafkaVersion")
         implementation("org.springframework.boot:spring-boot-starter:$springBootVersion")
-	    //implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
-        //implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
         implementation("junit:junit:$junitVersion")
 
-        runtime("io.netty:netty-transport-native-epoll:$nettyNativeEpoll")
+        runtime("io.netty:netty-transport-native-epoll:$nettyNativeEpollVersion:$nettyNativeEpollClassifier")
         
         //FIXME remove
         runtime ("com.h2database:h2:$h2dbVersion")

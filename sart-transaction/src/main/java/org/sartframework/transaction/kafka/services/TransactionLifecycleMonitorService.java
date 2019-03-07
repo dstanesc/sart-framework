@@ -127,9 +127,11 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
     
     public synchronized TransactionMonitors unregisterSubscribedMonitors(long xid) {
         
+        LOGGER.info("Unregister subscribed monitors for xid={}", xid);
+        
         TransactionMonitors  transactionMonitors = subscribedMonitors.remove(xid);
         
-       // transactionMonitors.close();
+        transactionMonitors.close();
         
         return transactionMonitors;
     }
