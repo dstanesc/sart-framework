@@ -46,14 +46,14 @@ Terminal 3
 
 
 
-# SART Framework 
+# Simple API for Reified Transactions (SART)
 
 
 ## Introduction
 
 There is an substantial body of evidence collected in the Simulation Data Management field proving the inefficiency (sometimes lack of robustness or predictable behavior) of lock based concurrency safeguards for parallel business transactions. In this context we refer as _Business Transactions_ long running batch operations producing or modifying large amounts of data.
 
-Consequently current paper targeted originally a design exercise to formalize non-blocking conflict resolution patterns for long running parallel data processing activities. However very soon becomes apparent that a larger context of investigation is required to design scalable and resilient data processing applications.
+Consequently current paper targeted originally a design exercise to formalize non-blocking conflict resolution patterns for long running parallel data processing activities. However very soon becomes evident that a larger context of investigation is required to design scalable and resilient data processing applications.
 
 The ultimate goal for non-blocking parallel execution is application performance and throughput but the full potential of such architectural building blocks is only harvested in case non-blocking strategies and scalability concerns are consistently recognized and  addressed across all architectural elements including a fresh perspective on APIs and use-cases themselves. As result an ubiquitous pattern for application design emerges. This represents a fundamental shift to the existing Simulation Data Management architecture.
 
@@ -670,7 +670,7 @@ abstract class ProjectedEntity {
 
 Assuming a traditional relational table based projection, each version of the projected entity will be represented as a distinct row.
 
-| Aggregate Key | Aggregate Version  | xmin | xmax      | attr1 | attr2 ...|
+| Aggregate Key | Aggregate Version  | Xmin | Xmax      | Attr1 | Attr2 ...|
 |---------------|--------------------|------|-----------|-------|----------|
 | K1            |v1                   |12    |NOT_SET   |aaaa   |bbb       |
 | K1            |v2                   |19    |NOT_SET   |aaaa   |ccc       |
@@ -697,7 +697,7 @@ The only distinction is the time used to capture the snapshot information `highe
 
 ## Client API
 
-To recapitulate, the _SART framework_ has a strong bias towards explicit and semantically stable data. Consequently _Domain Commands and Domain Events_ that drive the application state transitions are also exposed as first class citizens of the interaction APIs. The proposed design goes further, _Domain Queries and Domain Results_ are instantiated in equivalent _log structures_ with precise semantics and identity, hence stability over time. Mandatory _versioning_ of the mutable structures is used for tracking stable application states and disambiguate conflict resolution therefore _Domain Aggregate identity and version_ represent an essential aspect of the _Domain Command and Domain Event_ structure and correspondingly of the client APIs.
+To recapitulate, the _SART framework_ has a strong bias towards explicit and semantically stable data. Consequently _Domain Commands and Domain Events_ that drive the application state transitions are also exposed as first class citizens of the interaction APIs. The proposed design goes further, _Domain Queries and Domain Results_ are instantiated in equivalent _log structures_ with precise semantics and identity, hence stability over time. Mandatory _versioning_ of the mutable structures is used for tracking stable application states and disambiguate conflict resolution therefore __the identity and the version__ of the _Domain Aggregate_ represent an essential aspect of the _Domain Command and Domain Event_ structure and correspondingly of the client APIs.
 
 There is also a substantial evolution compared to traditional Simulation Data Management APIs towards asynchrony by eliminating, minimizing or explicitly controlling sequential execution needs at client interaction. Whether internal or at the integration points the design choice has been made consistently towards non-blocking interaction. 
 
@@ -775,13 +775,13 @@ The above snippet is entirely non-blocking, excepting the intentional chaining o
 
 Indisputably the traditional Simulation Data Management deployments benefit extensively from the execution insights exposed by technologies such __monitoring infrastructure__ on the quality, behavior and performance of data processing activities in general and database interactions in particular. Unfortunately, in the same time, the deployments suffer because of the limited monitoring scope and the negative impact on scalability and performance of the subjected system, especially in productive environments.
 
-There is also important to distinguish the on-demand nature of classic _Simulation Data Management monitoring infrastructure_ and the fact that a given application will communicate any of the monitoring details only in case of active interest of profiling explicit use-cases or application areas. While still a powerful instrument, this approach lacks the proactiveness of continuously monitoring chosen aspects of a given application feature and act promptly, ideally fully automated, on any observed dysfunctions.
+There is also important to distinguish the on-demand nature of classic _Simulation Data Management monitoring infrastructure_ and the fact that a given application will communicate any of the monitoring details only in case of active interest of profiling explicit use-cases or application areas. While still a powerful instrument, this approach lacks the proactiveness of continuously monitoring chosen aspects of a given application feature and act promptly, ideally fully automated, on observed behavior alterations.
 
 The _SART framework_ emphasis on externalizing state in _log structures_ and the exclusive message driven approach to state transitions as well as data access presents itself as a huge opportunity to re-think ground-up system monitoring. Such capacity of a software system to expose knowledge of its internal states and behavior was identified and coined in the industry as _Observability_. 
 
-It is important to note that _SART Observability_ is by no means an artificial add-on but __emerges naturally as just another level of detail supplied by the common business APIs__.
+It is important to note that _SART Observability_ is by no means an artificial add-on but __emerges naturally as just another level of detail exposed by the common APIs__.
 
-Following snippet demonstrates for instance how to acquire the timeline associated with the milestones relevant for the internal processing associated with specific functionality and __determine the corresponding latencies__. Aborting the transaction at the end of the exercise ensures no data side-effects. 
+Following snippet demonstrates for instance how to acquire the timeline associated with the milestones relevant for the internal processing associated with specific functionality and implicitly __monitor the performance__ of the given use-case.
 
 
 ```java
@@ -833,9 +833,11 @@ long resultCreationLatency =  monitor.getResultCreationTime() - monitor.getEntit
 long resultTransferLatency =  monitor.getQueryReturnTime() - monitor.getResultCreationTime();
 
 ```
-Regular clients or specialized agents can rely on similar techniques to collect execution and performance information, correlate it with underlying scenarios and adjust their behavior using larger feedback loops. For instance intelligent algorithms can convert in real-time the execution parameters into instructions for individual component configuration like favoring latency over throughput, slow-down or speed-up command production, etc. 
+Aborting the transaction at the end of the exercise ensures no data side-effects. 
 
-The proposed design provides natural instruments to __monitor functionality__ in its most intimate details, for instance conflict resolution decisions can be streamed interactively as conflict resolution events, assessed and acted upon in real-time. Following code fragment demonstrates a simple logic to force the complete transaction rollback when unfavorable conflict resolution choices are detected:
+Regular clients or specialized agents can rely on similar techniques to collect execution and performance information, correlate it with underlying scenarios and adjust their behavior using larger feedback loops. For instance intelligent algorithms can compile in real-time the execution parameters into instructions for individual component configuration like favoring latency over throughput, slow-down or speed-up command production, etc. 
+
+The proposed design provides also natural means to __monitor the functionality__ in its most intimate details, for instance conflict resolution decisions that are streamed interactively as conflict resolution events can be assessed and acted upon in real-time. Following code fragment demonstrates a simple logic to force the complete transaction rollback when unfavorable conflict resolution choices are detected:
 
 ```java
      /*
