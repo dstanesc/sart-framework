@@ -30,6 +30,27 @@ public class SerializationTest {
             return FooAggregate.class;
         }
     }
+    
+    class FooCmd2 extends GenericCreateAggregateCommand<GenericCreateAggregateCommand<FooCmd>> {
+
+        String foo2Attr; 
+        
+        public FooCmd2() {
+            super();
+        }
+
+        public FooCmd2(String aggregateKey, long aggregateVersion,  String foo2Attr) {
+            super(aggregateKey, aggregateVersion);
+            this.foo2Attr = foo2Attr;
+        }
+
+        @Override
+        public Class<? extends DomainAggregate> getAggregateType() {
+            return FooAggregate.class;
+        }
+    }
+    
+    
 
     class DelFooCmd extends GenericDestructAggregateCommand<DelFooCmd> {
 
@@ -67,12 +88,24 @@ public class SerializationTest {
     }
 
     @SuppressWarnings("resource")
-    @Test
+    //@Test
     public void test1() {
         ProtoSerializer<FooCmd> ser = new ProtoSerializer<FooCmd>();
         FooCmd cmd1 = new FooCmd("key1", 1001);
         byte[] serialized = ser.serialize(null, cmd1);
         FooCmd cmd2 = ser.deserialize(null, serialized);
+        Assert.assertEquals("Key compare", cmd1.getAggregateKey(), cmd2.getAggregateKey());
+        Assert.assertEquals("Version compare", cmd1.getAggregateVersion(), cmd2.getAggregateVersion());
+    }
+    
+    @SuppressWarnings("resource")
+    @Test
+    public void test2() {
+        ProtoSerializer<FooCmd> ser = new ProtoSerializer<FooCmd>();
+        FooCmd cmd1 = new FooCmd("key1", 1001);
+        byte[] serialized = ser.serialize(null, cmd1);
+        ProtoSerializer<FooCmd2> ser2 = new ProtoSerializer<FooCmd2>();
+        FooCmd2 cmd2 = ser2.deserialize(null, serialized);
         Assert.assertEquals("Key compare", cmd1.getAggregateKey(), cmd2.getAggregateKey());
         Assert.assertEquals("Version compare", cmd1.getAggregateVersion(), cmd2.getAggregateVersion());
     }

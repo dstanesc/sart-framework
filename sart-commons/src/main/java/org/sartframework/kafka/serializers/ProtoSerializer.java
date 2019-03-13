@@ -29,7 +29,8 @@ public class ProtoSerializer<T> implements Serializer<T>, Deserializer<T> {
             ProtobufIOUtil.mergeFrom(data, genericSerialized, GENERIC_SCHEMA);
         }
 
-//        VersionedStructure structure = genericSerialized.getStructure();
+        VersionedStructure serializedVersion = genericSerialized.getStructure();
+        
 //
 //        Class<?> javaType = genericSerialized.getJavaType();
 

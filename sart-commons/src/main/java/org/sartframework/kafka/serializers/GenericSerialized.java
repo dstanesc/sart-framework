@@ -18,15 +18,6 @@ public class GenericSerialized implements SerializedStructure {
         return structure;
     }
 
-    @Override
-    public Class<?> getJavaType() {
-
-        try {
-            return Class.forName(getStructure().getStructureName());
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override
     public Object getPayload() {

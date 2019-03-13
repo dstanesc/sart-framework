@@ -4,5 +4,5 @@ public interface VersionedStructure {
 
     int getVersion();
     
-    String getStructureName();
+    String getIdentity();
 }

@@ -11,6 +11,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion")
     implementation("io.protostuff:protostuff-core:$protostuffVersion")
     implementation("io.protostuff:protostuff-runtime:$protostuffVersion")
+    implementation("io.protostuff:protostuff-runtime-registry:$protostuffVersion")
     
     testImplementation("junit:junit:$junitVersion")
 }

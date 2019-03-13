@@ -4,12 +4,12 @@ public class GenericVersionedStructure implements VersionedStructure {
 
     int version;
     
-    String structureName;
+    String identity;
     
-    public GenericVersionedStructure(int version, String structureName) {
+    public GenericVersionedStructure(int version, String identity) {
         super();
         this.version = version;
-        this.structureName = structureName;
+        this.identity = identity;
     }
 
     @Override
@@ -18,8 +18,8 @@ public class GenericVersionedStructure implements VersionedStructure {
     }
 
     @Override
-    public String getStructureName() {
-        return structureName;
+    public String getIdentity() {
+        return identity;
     }
 
 }
