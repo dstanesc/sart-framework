@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.sartframework.aggregate.AsynchHandler;
+import org.sartframework.aggregate.HandlerNotFound;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +74,7 @@ public class AsynchHandlerDelegator<T, A extends Annotation> implements AsynchHa
 
             LOGGER.error("handler for {} and {} message not found ", aggregateClass, messageClass);
 
-            throw new RuntimeException("Handler not found for " + messageClass);
+           throw new HandlerNotFound(aggregateClass, messageClass);
         }
     }
 

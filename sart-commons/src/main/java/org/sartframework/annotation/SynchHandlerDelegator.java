@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.sartframework.aggregate.HandlerNotFound;
 import org.sartframework.aggregate.SynchHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +73,7 @@ public class SynchHandlerDelegator <T, A extends Annotation, R> implements Synch
             
             LOGGER.error("handler for {} and {} message not found ", aggregateClass, messageClass);
             
-            throw new IllegalStateException("handler not found");
+            throw new HandlerNotFound(aggregateClass, aggregateClass);
         } 
     }
 

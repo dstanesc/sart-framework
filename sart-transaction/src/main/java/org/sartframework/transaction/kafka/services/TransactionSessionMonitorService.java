@@ -1,7 +1,6 @@
 package org.sartframework.transaction.kafka.services;
 
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -24,8 +23,9 @@ import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.kafka.serializers.SartSerdes;
+import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.service.ManagedService;
+import org.sartframework.session.RunningTransactions;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.transaction.BusinessTransactionManager;
 import org.sartframework.transaction.kafka.KafkaBusinessTransactionManager;
@@ -38,54 +38,6 @@ import org.springframework.stereotype.Component;
 public class TransactionSessionMonitorService implements ManagedService<TransactionSessionMonitorService> {
 
     private static final String RUNNING_TRANSACTIONS_STORE = "runningTransactionsStore";
-
-    static class TxnSet {
-        
-        TransactionEvent lastEvent;
-        
-        Long highestCommited = -1L;
-
-        SortedSet<Long> txn;
-
-        public TxnSet() {
-            super();
-            txn = new TreeSet<>();
-        }
-
-        public void add(Long xid) {
-            txn.add(xid);
-        }
-
-        public void remove(Long xid) {
-            txn.remove(xid);
-        }
-
-        public SortedSet<Long> getTxn() {
-            return txn;
-        }
-        
-        public TransactionEvent getLastEvent() {
-            return lastEvent;
-        }
-
-        public void setLastEvent(TransactionEvent lastEvent) {
-            this.lastEvent = lastEvent;
-        }
-
-        public Long getHighestCommited() {
-            return highestCommited;
-        }
-
-        public void setHighestCommited(Long higestCommited) {
-            this.highestCommited = higestCommited;
-        }
-
-        public void updateHighestCommited(Long other) {
-            if(other > highestCommited) {
-                setHighestCommited(other);
-            }
-        }
-    }
 
     final static Logger LOGGER = LoggerFactory.getLogger(TransactionSessionMonitorService.class);
 
@@ -110,22 +62,22 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
         StreamsBuilder builder = new StreamsBuilder();
 
         KStream<Long, TransactionEvent> transactionEventStream = builder.stream(kafkaStreamsConfiguration.getTransactionEventTopic(),
-            Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.Proto()));
+            Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.TransactionEventSerde()));
         
         transactionEventStream
 
             .filter((xid, event) -> event instanceof TransactionStartedEvent || event instanceof TransactionCommittedEvent
                 || event instanceof TransactionAbortedEvent)
 
-            .groupBy((xid, event) -> "groupingConstant", Serialized.<String, TransactionEvent> with(Serdes.String(), SartSerdes.Proto()))
+            .groupBy((xid, event) -> "groupingConstant", Serialized.<String, TransactionEvent> with(Serdes.String(), SartSerdes.TransactionEventSerde()))
 
-            .aggregate(TxnSet::new, (type, event, txnSet) -> {
+            .aggregate(RunningTransactions::new, (type, event, running) -> {
 
                 if (event instanceof TransactionStartedEvent) {
 
                     LOGGER.info("Adding running txn xid={}", event.getXid());
                     
-                    txnSet.add(event.getXid());
+                    running.add(event.getXid());
 
                 } else if (event instanceof TransactionCommittedEvent) {
 
@@ -133,24 +85,24 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
                     
                     LOGGER.info("Set highest committed txn xid={}", event.getXid());
                     
-                    txnSet.remove(event.getXid());
+                    running.remove(event.getXid());
                     
-                    txnSet.setHighestCommited(event.getXid());
+                    running.setHighestCommited(event.getXid());
 
                 } else if (event instanceof TransactionAbortedEvent) {
 
                     LOGGER.info("Remove running txn xid={}", event.getXid());
                     
-                    txnSet.remove(event.getXid());
+                    running.remove(event.getXid());
                 }
                 
-                txnSet.setLastEvent(event);
+                running.setLastEvent(event);
 
-                return txnSet;
+                return running;
 
-            }, Materialized.<String, TxnSet, KeyValueStore<Bytes, byte[]>> as(RUNNING_TRANSACTIONS_STORE)
+            }, Materialized.<String, RunningTransactions, KeyValueStore<Bytes, byte[]>> as(RUNNING_TRANSACTIONS_STORE)
                 .withKeySerde(Serdes.String())
-                .withValueSerde(SartSerdes.Proto()))
+                .withValueSerde(SartSerdes.RunningTransactionsSerde()))
                // .withCachingEnabled())
             
             .toStream()
@@ -180,7 +132,7 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
                 return KeyValue.<Long, TransactionCompletedEvent> pair(xid, new TransactionCompletedEvent(xid, status));
             })
             
-            .to(kafkaStreamsConfiguration.getTransactionEventTopic(), Produced.<Long, TransactionCompletedEvent>with(Serdes.Long(), SartSerdes.Proto()));
+            .to(kafkaStreamsConfiguration.getTransactionEventTopic(), Produced.<Long, TransactionCompletedEvent>with(Serdes.Long(), SartSerdes.TransactionEventSerde()));
 
         Topology monitorTopology = builder.build();
 
@@ -210,8 +162,8 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
         
         transactionSnapshot.setTimestamp(System.currentTimeMillis());
 
-        ReadOnlyKeyValueStore<String, TxnSet> runningTransactionsStore = getKafkaStreams().store(RUNNING_TRANSACTIONS_STORE,
-            QueryableStoreTypes.<String, TxnSet> keyValueStore());
+        ReadOnlyKeyValueStore<String, RunningTransactions> runningTransactionsStore = getKafkaStreams().store(RUNNING_TRANSACTIONS_STORE,
+            QueryableStoreTypes.<String, RunningTransactions> keyValueStore());
         
         runningTransactionsStore.all().forEachRemaining(keyValue -> {
             

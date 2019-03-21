@@ -1,7 +1,9 @@
 package org.sartframework.demo.cae.result;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.result.QueryResult;
 
+@Evolvable(identity="cae.result.InputDeckQueryResult", version = 1)
 public class InputDeckQueryResult implements QueryResult {
 
     String queryKey;

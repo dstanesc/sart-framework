@@ -1,10 +1,11 @@
-package org.sartframework.kafka.serializers;
+package org.sartframework.kafka.serializers.serde;
 
 import java.util.Map;
 
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
+import org.sartframework.kafka.serializers.ProtoSerializer;
 
 public class ProtoSerde<T> implements Serde<T> {
 

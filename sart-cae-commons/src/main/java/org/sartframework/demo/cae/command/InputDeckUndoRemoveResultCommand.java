@@ -1,7 +1,9 @@
 package org.sartframework.demo.cae.command;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.GenericModifyAggregateCommand;
 
+@Evolvable(identity="cae.command.InputDeckUndoRemoveResult", version = 1)
 public class InputDeckUndoRemoveResultCommand extends GenericModifyAggregateCommand<InputDeckUndoRemoveResultCommand> {
 
     String resultId;

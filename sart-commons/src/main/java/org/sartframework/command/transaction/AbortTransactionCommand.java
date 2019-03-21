@@ -1,5 +1,8 @@
 package org.sartframework.command.transaction;
 
+import org.sartframework.annotation.Evolvable;
+
+@Evolvable(version = 1)
 public class AbortTransactionCommand implements TransactionCommand {
 
     long xid;

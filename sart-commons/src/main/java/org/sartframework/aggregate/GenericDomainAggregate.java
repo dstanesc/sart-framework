@@ -1,6 +1,5 @@
 package org.sartframework.aggregate;
 
-
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
@@ -29,10 +28,8 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-
-
 public abstract class GenericDomainAggregate implements DomainAggregate {
-    
+
     final static Logger LOGGER = LoggerFactory.getLogger(GenericDomainAggregate.class);
 
     @Id
@@ -132,8 +129,9 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
             deferrable.execute();
 
             return saveInternal(aggregateDeletedEvent);
-            
-        } else return getAggregateVersion();
+
+        } else
+            return getAggregateVersion();
     }
 
     @Override
@@ -148,13 +146,13 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
             deferrable.execute();
 
             return saveInternal(aggregateDeleteReversedEvent);
-            
-        } else return getAggregateVersion();
+
+        } else
+            return getAggregateVersion();
     }
 
     @Override
-    public <C extends DomainCommand> Long handleEvent(AggregateFieldIncrementedEvent<C> aggregateFieldIncrementedEvent,
-                                                         Deferrable deferrable) {
+    public <C extends DomainCommand> Long handleEvent(AggregateFieldIncrementedEvent<C> aggregateFieldIncrementedEvent, Deferrable deferrable) {
 
         // no conflict possible, commutative operation including decrement
 
@@ -162,8 +160,7 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
     }
 
     @Override
-    public <C extends DomainCommand> Long handleEvent(AggregateFieldDecrementedEvent<C> dggregateFieldDecrementedEvent,
-                                                         Deferrable deferrable) {
+    public <C extends DomainCommand> Long handleEvent(AggregateFieldDecrementedEvent<C> dggregateFieldDecrementedEvent, Deferrable deferrable) {
 
         // no conflict possible, commutative operation including increment
         deferrable.execute();
@@ -172,8 +169,7 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
     }
 
     @Override
-    public <C extends DomainCommand> Long handleEvent(AggregateFieldElementAddedEvent<C> aggregateFieldElementAddedEvent,
-                                                         Deferrable deferrable) {
+    public <C extends DomainCommand> Long handleEvent(AggregateFieldElementAddedEvent<C> aggregateFieldElementAddedEvent, Deferrable deferrable) {
 
         // no conflict possible, grow only set, the compensation is not removal
         // but element flagging via xmax
@@ -184,8 +180,7 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
     }
 
     @Override
-    public <C extends DomainCommand> Long handleEvent(AggregateFieldElementRemovedEvent<C> aggregateFieldElementRemovedEvent,
-                                                         Deferrable deferrable) {
+    public <C extends DomainCommand> Long handleEvent(AggregateFieldElementRemovedEvent<C> aggregateFieldElementRemovedEvent, Deferrable deferrable) {
 
         // Conflict possible, updating xmax of the entry
         boolean applyChanges = resolveUpdateConflicts(aggregateFieldElementRemovedEvent, new ConflictResolver_LastWriterWins());
@@ -195,13 +190,14 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
             deferrable.execute();
 
             return saveInternal(aggregateFieldElementRemovedEvent);
-            
-        } else return getAggregateVersion();
+
+        } else
+            return getAggregateVersion();
     }
 
     @Override
     public <C extends DomainCommand> Long handleEvent(AggregateFieldElementRemoveReversedEvent<C> aggregateFieldElementRemoveReversedEvent,
-                                                         Deferrable deferrable) {
+                                                      Deferrable deferrable) {
 
         // Conflict possible, updating xmax of the entry
         boolean applyChanges = resolveUpdateConflicts(aggregateFieldElementRemoveReversedEvent, new ConflictResolver_LastWriterWins());
@@ -211,8 +207,9 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
             deferrable.execute();
 
             return saveInternal(aggregateFieldElementRemoveReversedEvent);
-            
-        } else return getAggregateVersion();
+
+        } else
+            return getAggregateVersion();
 
     }
 
@@ -226,8 +223,9 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
             deferrable.execute();
 
             return saveInternal(aggregateFieldUpdatedEvent);
-            
-        } else return getAggregateVersion();
+
+        } else
+            return getAggregateVersion();
 
     }
 
@@ -266,7 +264,7 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
     }
 
     private <C extends DomainCommand> void dispatchConflictResolvedEvent(DomainEvent<C> domainEvent, String changeKey,
-                                                                            DomainEvent<? extends DomainCommand> conflictingChange, boolean resolved) {
+                                                                         DomainEvent<? extends DomainCommand> conflictingChange, boolean resolved) {
         long winnerVersion;
         long otherVersion;
         long winnerXid;
@@ -290,10 +288,10 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
             winnerEvent = encodeJson(conflictingChange);
         }
 
-        //it should be a command ?
+        // it should be a command ?
         ConflictResolvedEvent conflictResolvedEventLoser = new ConflictResolvedEvent(otherXid, aggregateKey, changeKey, winnerVersion, otherVersion,
             winnerXid, otherXid, winnerEvent, otherEvent);
-        
+
         ConflictResolvedEvent conflictResolvedEventWinner = new ConflictResolvedEvent(winnerXid, aggregateKey, changeKey, winnerVersion, otherVersion,
             winnerXid, otherXid, winnerEvent, otherEvent);
 
@@ -303,7 +301,7 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
 
     private Long saveInternal(DomainEvent<?> domainEvent) {
 
-      //  domainEvent.setProcessedTime(Calendar.getInstance().getTimeInMillis());
+        // domainEvent.setProcessedTime(Calendar.getInstance().getTimeInMillis());
 
         Queue<DomainEvent<? extends DomainCommand>> transactionEvents = this.eventsByTransaction.get(domainEvent.getXid());
 
@@ -329,30 +327,35 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
         return aggregateVersion;
     }
 
-
     protected void publish(long xid, long xcs, DomainEvent<? extends DomainCommand> domainEvent) {
 
         LOGGER.info("dispatch events xid={}, xcs={}, domainEvent={}", xid, xcs, domainEvent);
-        
-        long resultingAggregateVersion = handle(domainEvent);
-        
-        domainEvent.setTargetAggregateVersion(resultingAggregateVersion);
-        
-        publish(domainEvent);
 
-        publish(new LogProgressCommand(xid, xcs, domainEvent));
+        try {
+
+            long resultingAggregateVersion = handle(domainEvent);
+
+            domainEvent.setTargetAggregateVersion(resultingAggregateVersion);
+
+            publish(domainEvent);
+
+            publish(new LogProgressCommand(xid, xcs, domainEvent));
+
+        } catch (HandlerNotFound e) {
+
+            LOGGER.error("Handler missing in aggregate. Use @DomainEventHandler annotation on {}#methodName({} domainEvent)", e.getHandlingClass(), e.getArgumentType());
+            LOGGER.error("Handler missing in aggregate.", e);
+        }
     }
 
     protected void fail(long xid) {
-        
+
         LOGGER.info("Failing TX {} ", xid);
 
         publish(new AbortTransactionCommand(xid));
     }
-    
-  
+
     public abstract long handle(DomainEvent<? extends DomainCommand> atomicEvent);
-    
 
     @Override
     public int hashCode() {
@@ -388,7 +391,6 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
         return true;
     }
 
-    
     @Override
     public String toString() {
 

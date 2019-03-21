@@ -1,8 +1,10 @@
 package org.sartframework.command.transaction;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
 
+@Evolvable(version = 1)
 public class LogProgressCommand implements TransactionCommand {
 
     long xid;

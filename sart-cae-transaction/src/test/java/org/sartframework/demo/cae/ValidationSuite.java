@@ -8,7 +8,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ 
     
-    SerializeTest.class, 
+    SerializerPolymorphTest.class, 
     TransactionTest.class, 
     ScalabilityTest.class, 
     VersionTest.class, 

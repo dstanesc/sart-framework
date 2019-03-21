@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.BatchDomainCommand;
 import org.sartframework.command.GenericDomainCommand;
 
+@Evolvable(identity="cae.command.BatchInputDeckCreate", version = 1)
 public class BatchInputDeckCreateCommand extends GenericDomainCommand<BatchInputDeckCreateCommand> implements BatchDomainCommand<InputDeckCreateCommand> {
 
     List<InputDeckCreateCommand> content = new ArrayList<>();

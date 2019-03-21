@@ -1,7 +1,9 @@
 package org.sartframework.event.query;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.event.QueryEvent;
 
+@Evolvable(version=1)
 public class QueryUnsubscribedEvent implements QueryEvent {
 
     long creationTime;

@@ -17,9 +17,13 @@ import org.sartframework.demo.cae.query.InputDeckByNameQuery;
 import org.sartframework.demo.cae.result.InputDeckQueryResult;
 import org.sartframework.driver.RemoteTransactionDriver;
 import org.sartframework.driver.DomainTransaction;
+import org.sartframework.driver.RemoteConflictQueryApi;
 import org.sartframework.driver.RemoteTransactionApi;
 import org.sartframework.driver.TransactionDriver;
+import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.query.ConflictsByAggregateQuery;
+import org.sartframework.result.ConflictResolvedResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +95,7 @@ public class IncrementalTest {
 
     }
     
-   //@Test
+   @Test
     @SuppressWarnings("unused")
     public void testQueryInputDeckProjectionSyntax2() throws Exception {
 
@@ -132,7 +136,7 @@ public class IncrementalTest {
         Assert.assertEquals(r.getInputDeckName(), inputDeckName);
     }
 
-    @Test
+   //@Test
     public void testInputDeckPerformanceMonitor() throws Exception {
 
         TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
@@ -204,6 +208,9 @@ public class IncrementalTest {
         LOGGER.info("Total latency = {} ms", totalLatency);
     }
 
+    
+    
+   
     protected Supplier<InputDeckUpdateFileCommand> buildInputDeckUpdateFileCommand(String id, long version, String inputDeckFile) {
 
         return () -> new InputDeckUpdateFileCommand(id, version, inputDeckFile);

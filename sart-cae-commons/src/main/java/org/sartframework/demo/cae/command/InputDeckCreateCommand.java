@@ -1,9 +1,11 @@
 package org.sartframework.demo.cae.command;
 
 import org.sartframework.aggregate.DomainAggregate;
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.GenericCreateAggregateCommand;
 import org.sartframework.demo.cae.aggregate.SimulationAggregate;
 
+@Evolvable(identity="cae.command.InputDeckCreate", version = 1)
 public class InputDeckCreateCommand extends GenericCreateAggregateCommand<InputDeckCreateCommand> {
 
     String inputDeckName;

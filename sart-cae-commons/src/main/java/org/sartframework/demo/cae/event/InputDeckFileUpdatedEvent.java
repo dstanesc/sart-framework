@@ -1,8 +1,10 @@
 package org.sartframework.demo.cae.event;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.demo.cae.command.InputDeckUpdateFileCommand;
 import org.sartframework.event.GenericAggregateFieldUpdatedEvent;
 
+@Evolvable(identity="cae.event.InputDeckFileUpdated", version = 1)
 public class InputDeckFileUpdatedEvent extends GenericAggregateFieldUpdatedEvent<InputDeckUpdateFileCommand> {
 
     String inputDeckFile;

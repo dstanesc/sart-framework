@@ -4,6 +4,7 @@ import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.sartframework.aggregate.AnnotatedDomainAggregate;
+import org.sartframework.aggregate.HandlerNotFound;
 import org.sartframework.command.CreateAggregateCommand;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
@@ -77,13 +78,21 @@ public class DomainCommandProcessor implements Processor<String, DomainCommand>{
 //        
         if (aggregate != null) {
 
-            aggregate.setPublisher(businessTransactionManager);
+            try {
+                
+                aggregate.setPublisher(businessTransactionManager);
 
-            aggregate.handle(domainCommand);
+                aggregate.handle(domainCommand);
 
-            aggregateStore.put(aggregateKey, aggregate);
+                aggregateStore.put(aggregateKey, aggregate);
 
-            context.commit();
+                context.commit();
+                
+            } catch (HandlerNotFound e) {
+               
+                LOGGER.error("Handler missing in aggregate. Use @DomainCommandHandler annotation on {}#methodName({} domainCommand)", e.getHandlingClass(), e.getArgumentType());
+                LOGGER.error("Handler missing in aggregate", e);
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 package org.sartframework.event;
 
-import org.sartframework.command.GenericVoidDomainCommand;
+import org.sartframework.command.DefaultVoidDomainCommand;
 import org.sartframework.command.VoidDomainCommand;
 
 public class GenericVoidDomainEvent extends GenericDomainEvent<VoidDomainCommand> implements VoidDomainEvent {
@@ -17,7 +17,7 @@ public class GenericVoidDomainEvent extends GenericDomainEvent<VoidDomainCommand
     @Override
     public VoidDomainCommand undo(long xid, long xcs) {
        // should we  throw new UnsupportedOperationException() ?
-        return new GenericVoidDomainCommand(getAggregateKey(), getSourceAggregateVersion());
+        return new DefaultVoidDomainCommand(getAggregateKey(), getSourceAggregateVersion());
     }
 
     @Override

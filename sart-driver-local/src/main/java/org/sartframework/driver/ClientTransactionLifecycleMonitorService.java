@@ -18,7 +18,7 @@ import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.kafka.serializers.SartSerdes;
+import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.service.ManagedService;
 import org.sartframework.transaction.TransactionMonitors;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public class ClientTransactionLifecycleMonitorService implements ManagedService<
         StreamsBuilder builder = new StreamsBuilder();
 
         KStream<Long, TransactionEvent> transactionEventStream = builder.stream(kafkaStreamsConfiguration.getTransactionEventTopic(),
-            Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.Proto()));
+            Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.TransactionEventSerde()));
 
         transactionEventStream.foreach((xid, event) -> {
 

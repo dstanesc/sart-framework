@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import org.sartframework.aggregate.HandlerNotFound;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.result.QueryResult;
 import org.slf4j.Logger;
@@ -82,7 +83,7 @@ public class QueryDelegator<A extends Annotation, R extends QueryResult> impleme
 
             LOGGER.error("handler for {} and {} message not found ", aggregateClass, queryClass);
 
-            throw new RuntimeException();
+            throw new HandlerNotFound(aggregateClass, aggregateClass);
         }
     }
 

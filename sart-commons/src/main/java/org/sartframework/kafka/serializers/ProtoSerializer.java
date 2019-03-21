@@ -6,6 +6,9 @@ import java.util.Map;
 
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
+import org.sartframework.serializers.ContentSerializer;
+import org.sartframework.serializers.SerializedStructure;
+import org.sartframework.serializers.protostuff.ContentSerializerProtostuff;
 import org.springframework.util.Assert;
 
 import io.protostuff.LinkedBuffer;
@@ -17,19 +20,19 @@ import io.protostuff.runtime.RuntimeSchema;
 
 public class ProtoSerializer<T> implements Serializer<T>, Deserializer<T> {
 
-    public final static Schema<GenericSerialized> GENERIC_SCHEMA = RuntimeSchema.getSchema(GenericSerialized.class);
+    public final static Schema<SerializedStructure> GENERIC_SCHEMA = RuntimeSchema.getSchema(SerializedStructure.class);
 
     @SuppressWarnings("unchecked")
     @Override
     public T deserialize(String topic, byte[] data) {
 
-        GenericSerialized genericSerialized = GENERIC_SCHEMA.newMessage();
+        SerializedStructure genericSerialized = GENERIC_SCHEMA.newMessage();
 
         if (data != null) {
             ProtobufIOUtil.mergeFrom(data, genericSerialized, GENERIC_SCHEMA);
         }
 
-        VersionedStructure serializedVersion = genericSerialized.getStructure();
+      //  VersionedStructure serializedVersion = genericSerialized.getStructure();
         
 //
 //        Class<?> javaType = genericSerialized.getJavaType();
@@ -50,9 +53,12 @@ public class ProtoSerializer<T> implements Serializer<T>, Deserializer<T> {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
             LinkedBuffer buffer = LinkedBuffer.allocate();
-
-            GenericSerialized genericSerialized = new GenericSerialized(new GenericVersionedStructure(getVersion(data), getStructureName(data)),
-                data);
+            
+            ContentSerializer<T> contentSerializer = new ContentSerializerProtostuff<T>((Class<T>)data.getClass()); 
+             
+            byte[] byteArray = contentSerializer.serialize(data);
+            
+            SerializedStructure genericSerialized = new SerializedStructure(getStructureIdentity(data), getVersion(data), byteArray);
 
             ProtobufIOUtil.writeTo(outputStream, genericSerialized, GENERIC_SCHEMA, buffer);
 
@@ -68,7 +74,7 @@ public class ProtoSerializer<T> implements Serializer<T>, Deserializer<T> {
         return 0;
     }
 
-    private String getStructureName(T data) {
+    private String getStructureIdentity(T data) {
 
         return data.getClass().getName();
     }

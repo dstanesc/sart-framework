@@ -1,5 +1,6 @@
 package org.sartframework.transaction.kafka;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionCommand;
 import org.sartframework.event.TransactionEvent;
@@ -16,6 +17,7 @@ import org.sartframework.transaction.kafka.services.TransactionRollbackService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Evolvable(version = 1)
 public class KafkaTransactionAggregate extends GenericTransactionAggregate {
 
     final static Logger LOGGER = LoggerFactory.getLogger(KafkaTransactionAggregate.class);

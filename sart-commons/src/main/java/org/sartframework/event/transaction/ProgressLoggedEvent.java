@@ -1,10 +1,12 @@
 package org.sartframework.event.transaction;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.GenericEvent;
 import org.sartframework.event.TransactionEvent;
 
+@Evolvable(version = 1)
 public class ProgressLoggedEvent extends GenericEvent implements TransactionEvent {
 
     long xcs;

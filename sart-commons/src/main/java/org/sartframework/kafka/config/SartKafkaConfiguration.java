@@ -9,12 +9,11 @@ import java.util.Map;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsConfig;
-import org.sartframework.kafka.serializers.ProtoSerializer;
+import org.sartframework.kafka.serializers.SartGenericSerializer;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -277,113 +276,68 @@ public class SartKafkaConfiguration {
         return kafkaConfig;
     }
     
-    public Map<String, Object> getKafkaConsumerProcessorConfig(String groupIdentifier) {
-        Map<String, Object> kafkaConfig = getKafkaCommonConfig();
-        kafkaConfig.put(ConsumerConfig.GROUP_ID_CONFIG, application + "-" + groupIdentifier);
-        kafkaConfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ProtoSerializer.class);
-        return kafkaConfig;
-    }
 
-    public Map<String, Object> getKafkaGenericProducerConfig() {
-        Map<String, Object> kafkaConfig = getKafkaCommonConfig();
-        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ProtoSerializer.class);
-        return kafkaConfig;
-    }
-
-    public Map<String, Object> getKafkaStreamsTransactionProducerConfig() {
-        Map<String, Object> props = new HashMap<String, Object>();
-        props.putAll(getKafkaCommonConfig());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
-
-        return props;
-    }
-
-    public Map<String, Object> getKafkaStreamsDomainCommandProducerConfig() {
-        Map<String, Object> props = new HashMap<String, Object>();
-        props.putAll(getKafkaCommonConfig());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-
-        return props;
-    }
-
-    public Map<String, Object> getKafkaStreamsDomainEventProducerConfig() {
-        Map<String, Object> props = new HashMap<String, Object>();
-        props.putAll(getKafkaCommonConfig());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-
-        return props;
-    }
-    
-    public Map<String, Object> getKafkaStreamsDomainQueryProducerConfig() {
-        Map<String, Object> props = new HashMap<String, Object>();
-        props.putAll(getKafkaCommonConfig());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-
-        return props;
-    }
-    
-    public Map<String, Object> getKafkaStreamsDomainQueryResultProducerConfig() {
-        Map<String, Object> props = new HashMap<String, Object>();
-        props.putAll(getKafkaCommonConfig());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-
-        return props;
-    }
-    
-    public Map<String, Object> getKafkaStreamsDomainQueryEventProducerConfig() {
-        Map<String, Object> props = new HashMap<String, Object>();
-        props.putAll(getKafkaCommonConfig());
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-
-        return props;
-    }
-
-    public Map<String, Object> getKafkaTransactionProducerConfig() {
+    public Map<String, Object> getKafkaTransactionCommandProducerConfig() {
         final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
-        kafkaConfig.putAll(getKafkaGenericProducerConfig());
-        kafkaConfig.putAll(getKafkaStreamsTransactionProducerConfig());
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
+    
+        return Collections.unmodifiableMap(kafkaConfig);
+    }
+    
+    public Map<String, Object> getKafkaTransactionEventProducerConfig() {
+        final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
 
         return Collections.unmodifiableMap(kafkaConfig);
     }
+    
 
     public Map<String, Object> getKafkaDomainCommandProducerConfig() {
         final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.putAll(getKafkaGenericProducerConfig());
-        kafkaConfig.putAll(getKafkaStreamsDomainCommandProducerConfig());
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
 
         return Collections.unmodifiableMap(kafkaConfig);
     }
 
     public Map<String, Object> getKafkaDomainEventProducerConfig() {
         final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.putAll(getKafkaGenericProducerConfig());
-        kafkaConfig.putAll(getKafkaStreamsDomainEventProducerConfig());
-
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
+        
         return Collections.unmodifiableMap(kafkaConfig);
     }
 
-    public Map<String, Object> getKafkaQueryProducerConfig() {
+    public Map<String, Object> getKafkaDomainQueryProducerConfig() {
         final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.putAll(getKafkaGenericProducerConfig());
-        kafkaConfig.putAll(getKafkaStreamsDomainQueryProducerConfig());
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
 
         return Collections.unmodifiableMap(kafkaConfig);
     }
     
     public Map<String, Object> getKafkaQueryResultProducerConfig() {
         final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.putAll(getKafkaGenericProducerConfig());
-        kafkaConfig.putAll(getKafkaStreamsDomainQueryResultProducerConfig());
-
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
+        
         return Collections.unmodifiableMap(kafkaConfig);
     }
     
     public Map<String, Object> getKafkaQueryEventProducerConfig() {
         final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
-        kafkaConfig.putAll(getKafkaGenericProducerConfig());
-        kafkaConfig.putAll(getKafkaStreamsDomainQueryEventProducerConfig());
-
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
+        
         return Collections.unmodifiableMap(kafkaConfig);
     }
 

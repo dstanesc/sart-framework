@@ -2,9 +2,9 @@ package org.sartframework.transaction;
 
 import javax.persistence.Id;
 
-import org.sartframework.aggregate.AsynchHandler;
+import org.sartframework.aggregate.TransactionAggregate;
 import org.sartframework.command.DomainCommand;
-import org.sartframework.command.GenericVoidDomainCommand;
+import org.sartframework.command.DefaultVoidDomainCommand;
 import org.sartframework.command.transaction.AbortTransactionCommand;
 import org.sartframework.command.transaction.CommitTransactionCommand;
 import org.sartframework.command.transaction.CompensateDomainEventCommand;
@@ -26,7 +26,7 @@ import org.sartframework.session.SystemSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class GenericTransactionAggregate implements AsynchHandler<TransactionCommand> {
+public abstract class GenericTransactionAggregate implements TransactionAggregate {
 
     final static Logger LOGGER = LoggerFactory.getLogger(GenericTransactionAggregate.class);
 
@@ -221,7 +221,7 @@ public abstract class GenericTransactionAggregate implements AsynchHandler<Trans
 
         if (xcs > 0) {
             DomainCommand reverseCommand = compensatedEvent.isSkip()
-                ? new GenericVoidDomainCommand(compensatedEvent.getAggregateKey(), compensatedEvent.getSourceAggregateVersion())
+                ? new DefaultVoidDomainCommand(compensatedEvent.getAggregateKey(), compensatedEvent.getSourceAggregateVersion())
                     .addTransactionHeader(xid, -xcs)
                 : domainEvent.undo(xid, -xcs);
 

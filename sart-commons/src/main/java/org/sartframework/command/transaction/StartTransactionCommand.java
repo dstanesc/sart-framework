@@ -1,7 +1,9 @@
 package org.sartframework.command.transaction;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.session.SystemSnapshot;
 
+@Evolvable(version = 1)
 public class StartTransactionCommand implements TransactionCommand {
 
     long xid;

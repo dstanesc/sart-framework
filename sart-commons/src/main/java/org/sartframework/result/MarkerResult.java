@@ -10,9 +10,9 @@ public abstract class MarkerResult implements QueryResult {
         super();
     }
 
-    public MarkerResult(String resultKey) {
+    public MarkerResult(String queryKey) {
         super();
-        this.queryKey = resultKey;
+        this.queryKey = queryKey;
         this.resultCreationTime = System.currentTimeMillis();
     }
 
@@ -22,8 +22,9 @@ public abstract class MarkerResult implements QueryResult {
         return queryKey;
     }
 
-    public void setQueryKey(String resultKey) {
-        this.queryKey = resultKey;
+    public void setQueryKey(String queryKey) {
+        
+        this.queryKey = queryKey;
     }
 
     @Override

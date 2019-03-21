@@ -18,7 +18,7 @@ import org.sartframework.event.DomainEvent;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.event.transaction.ProgressLoggedEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.kafka.serializers.SartSerdes;
+import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.service.ManagedService;
 import org.sartframework.transaction.kafka.PartitionOffset;
 import org.slf4j.Logger;
@@ -136,7 +136,7 @@ public class TransactionRollbackService implements ManagedService<TransactionRol
         List<String> aggregateFieldUpdates = new ArrayList<>();
 
         builder
-            .stream(kafkaStreamsConfiguration.getTransactionEventTopic(), Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.Proto()))
+            .stream(kafkaStreamsConfiguration.getTransactionEventTopic(), Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.TransactionEventSerde()))
 
             .filter((x, e) -> (x == xid)).filter((x, e) -> ProgressLoggedEvent.class.equals(e.getClass()) && ((ProgressLoggedEvent) e).getXcs() > 0)
 
@@ -167,7 +167,7 @@ public class TransactionRollbackService implements ManagedService<TransactionRol
             })
 
             .to(kafkaStreamsConfiguration.getTransactionCommandTopic(),
-                Produced.<Long, CompensateDomainEventCommand> with(Serdes.Long(), SartSerdes.Proto()));
+                Produced.<Long, CompensateDomainEventCommand> with(Serdes.Long(), SartSerdes.TransactionCommandSerde()));
 
         Topology monitorTopology = builder.build();
 

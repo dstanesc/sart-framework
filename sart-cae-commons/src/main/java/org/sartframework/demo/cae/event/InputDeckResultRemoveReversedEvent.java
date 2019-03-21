@@ -1,8 +1,10 @@
 package org.sartframework.demo.cae.event;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.demo.cae.command.InputDeckRemoveResultCommand;
 import org.sartframework.event.GenericAggregateFieldElementRemoveReversedEvent;
 
+@Evolvable(identity="cae.event.InputDeckResultRemoveReversed", version = 1)
 public class InputDeckResultRemoveReversedEvent
     extends GenericAggregateFieldElementRemoveReversedEvent<InputDeckRemoveResultCommand> {
 

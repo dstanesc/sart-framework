@@ -1,5 +1,8 @@
 package org.sartframework.query;
 
+import org.sartframework.annotation.Evolvable;
+
+@Evolvable(version = 1)
 public class ConflictsByXidQuery extends AbstractQuery {
 
     final long xid;

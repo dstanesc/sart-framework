@@ -9,7 +9,7 @@ import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.sartframework.aggregate.AnnotatedDomainAggregate;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.kafka.serializers.SartSerdes;
+import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.service.ManagedService;
 import org.sartframework.transaction.BusinessTransactionManager;
 import org.sartframework.transaction.kafka.processors.DomainCommandProcessor;
@@ -45,10 +45,10 @@ public class DomainCommandService implements ManagedService<DomainCommandService
 
         StoreBuilder<KeyValueStore<String, AnnotatedDomainAggregate>> aggregateStoreBuilder = Stores
             .<String, AnnotatedDomainAggregate> keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getAggregate().getStore().getName()), Serdes.String(), SartSerdes.Proto());
+                Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getAggregate().getStore().getName()), Serdes.String(), SartSerdes.DomainAggregateSerde());
 
         commandHandlingTopology
-            .addSource("domain-command-source", SartSerdes.String().deserializer(), SartSerdes.Proto().deserializer(),
+            .addSource("domain-command-source", SartSerdes.String().deserializer(), SartSerdes.DomainCommandSerde().deserializer(),
                 kafkaStreamsConfiguration.getDomainCommandTopic())
 
             .addProcessor("domain-command-validator", () -> new DomainCommandProcessor(kafkaStreamsConfiguration, businessTransactionManager),
@@ -57,13 +57,13 @@ public class DomainCommandService implements ManagedService<DomainCommandService
             .addStateStore(aggregateStoreBuilder, "domain-command-validator")
 
             .addSink("domain-event-sink", kafkaStreamsConfiguration.getDomainEventTopic(), SartSerdes.String().serializer(),
-                SartSerdes.Proto().serializer(), "domain-command-validator")
+                SartSerdes.DomainEventSerde().serializer(), "domain-command-validator")
 
             .addSink("transaction-command-sink", kafkaStreamsConfiguration.getTransactionCommandTopic(), SartSerdes.Long().serializer(),
-                SartSerdes.Proto().serializer(), "domain-command-validator")
+                SartSerdes.TransactionCommandSerde().serializer(), "domain-command-validator")
 
             .addSink("transaction-event-sink", kafkaStreamsConfiguration.getTransactionEventTopic(), SartSerdes.Long().serializer(),
-                SartSerdes.Proto().serializer(), "domain-command-validator");
+                SartSerdes.TransactionEventSerde().serializer(), "domain-command-validator");
 
         kafkaStreams = new KafkaStreams(commandHandlingTopology,
             new StreamsConfig(kafkaStreamsConfiguration.getKafkaStreamsProcessorConfig("domain-command-processor")));

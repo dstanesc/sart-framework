@@ -8,7 +8,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.kafka.serializers.SartSerdes;
+import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.service.ManagedService;
 import org.sartframework.transaction.kafka.KafkaBusinessTransactionManager;
 import org.sartframework.transaction.kafka.KafkaTransactionAggregate;
@@ -44,26 +44,25 @@ public class TransactionCommandService implements ManagedService<TransactionComm
         final Topology commandHandlingTopology = new Topology();
 
         StoreBuilder<KeyValueStore<Long, KafkaTransactionAggregate>> aggregateStoreBuilder = Stores.<Long, KafkaTransactionAggregate> keyValueStoreBuilder(
-            Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getTransaction().getStore().getName()), Serdes.Long(), SartSerdes.Proto());
+            Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getTransaction().getStore().getName()), Serdes.Long(), SartSerdes.TransactionAggregateSerde());
 
         commandHandlingTopology
-            .addSource("transaction-command-source", SartSerdes.Long().deserializer(), SartSerdes.Proto().deserializer(),
+            .addSource("transaction-command-source", SartSerdes.Long().deserializer(), SartSerdes.TransactionCommandSerde().deserializer(),
                 kafkaStreamsConfiguration.getTransactionCommandTopic())
 
             .addProcessor("transaction-command-validator", () -> new TransactionCommandProcessor(kafkaStreamsConfiguration, businessTransactionManager),
                 "transaction-command-source")
 
-            .addStateStore(aggregateStoreBuilder, "transaction-command-validator")
-
-            .addSink("transaction-event-sink", kafkaStreamsConfiguration.getDomainEventTopic(), SartSerdes.Long().serializer(),
-                SartSerdes.Proto().serializer(), "transaction-command-validator")
+            .addStateStore(aggregateStoreBuilder, "transaction-command-validator");
+//FIXME, should be used instead see  TransactionCommandProcessor      
+/*
+            .addSink("transaction-command-sink", kafkaStreamsConfiguration.getTransactionCommandTopic(), SartSerdes.Long().serializer(),
+                SartSerdes.TransactionCommandSerde().serializer(), "transaction-command-validator")
 
             .addSink("domain-command-sink", kafkaStreamsConfiguration.getDomainCommandTopic(), SartSerdes.String().serializer(),
-                SartSerdes.Proto().serializer(), "transaction-command-validator");
-            
-           
-        
+                SartSerdes.DomainCommandSerde().serializer(), "transaction-command-validator");
 
+*/
         kafkaStreams = new KafkaStreams(commandHandlingTopology,
             new StreamsConfig(kafkaStreamsConfiguration.getKafkaStreamsProcessorConfig("transaction-command-processor")));
 

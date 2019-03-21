@@ -1,9 +1,11 @@
 package org.sartframework.event.transaction;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.event.GenericEvent;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.session.SystemSnapshot;
 
+@Evolvable(version = 1)
 public class TransactionStartedEvent extends GenericEvent implements TransactionEvent {
 
     SystemSnapshot systemSnapshot;

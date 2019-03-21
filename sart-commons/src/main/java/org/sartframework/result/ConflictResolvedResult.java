@@ -1,7 +1,9 @@
 package org.sartframework.result;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 
+@Evolvable(version = 1)
 public class ConflictResolvedResult extends ConflictResolvedEvent implements QueryResult {
 
     String queryKey;

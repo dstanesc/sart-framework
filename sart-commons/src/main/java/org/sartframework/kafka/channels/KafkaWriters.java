@@ -81,7 +81,7 @@ public class KafkaWriters {
     @DependsOn("transactionCommandTopic")
     private KafkaTemplate<Long, TransactionCommand> transactionCommandWriter() {
         DefaultKafkaProducerFactory<Long, TransactionCommand> pf = new DefaultKafkaProducerFactory<>(
-            sartKafkaConfiguration.getKafkaTransactionProducerConfig());
+            sartKafkaConfiguration.getKafkaTransactionCommandProducerConfig());
         KafkaTemplate<Long, TransactionCommand> kafkaTemplate = new KafkaTemplate<>(pf, true);
         kafkaTemplate.setDefaultTopic(sartKafkaConfiguration.getTransactionCommandTopic());
         return kafkaTemplate;
@@ -91,7 +91,7 @@ public class KafkaWriters {
     @DependsOn("transactionEventTopic")
     private KafkaTemplate<Long, TransactionEvent> transactionEventWriter() {
         DefaultKafkaProducerFactory<Long, TransactionEvent> pf = new DefaultKafkaProducerFactory<>(
-            sartKafkaConfiguration.getKafkaTransactionProducerConfig());
+            sartKafkaConfiguration.getKafkaTransactionEventProducerConfig());
         KafkaTemplate<Long, TransactionEvent> kafkaTemplate = new KafkaTemplate<>(pf, true);
         kafkaTemplate.setDefaultTopic(sartKafkaConfiguration.getTransactionEventTopic());
         return kafkaTemplate;
@@ -120,7 +120,7 @@ public class KafkaWriters {
     @Bean
     @DependsOn("conflictQueryTopic")
     private KafkaTemplate<String, DomainQuery> conflictQueryWriter() {
-        DefaultKafkaProducerFactory<String, DomainQuery> pf = new DefaultKafkaProducerFactory<>(sartKafkaConfiguration.getKafkaQueryProducerConfig());
+        DefaultKafkaProducerFactory<String, DomainQuery> pf = new DefaultKafkaProducerFactory<>(sartKafkaConfiguration.getKafkaDomainQueryProducerConfig());
         KafkaTemplate<String, DomainQuery> kafkaTemplate = new KafkaTemplate<>(pf, true);
         kafkaTemplate.setDefaultTopic(sartKafkaConfiguration.getConflictQueryTopic());
         return kafkaTemplate;
@@ -147,7 +147,7 @@ public class KafkaWriters {
     @Bean
     @DependsOn("domainQueryTopic")
     private KafkaTemplate<String, DomainQuery> domainQueryWriter() {
-        DefaultKafkaProducerFactory<String, DomainQuery> pf = new DefaultKafkaProducerFactory<>(sartKafkaConfiguration.getKafkaQueryProducerConfig());
+        DefaultKafkaProducerFactory<String, DomainQuery> pf = new DefaultKafkaProducerFactory<>(sartKafkaConfiguration.getKafkaDomainQueryProducerConfig());
         KafkaTemplate<String, DomainQuery> kafkaTemplate = new KafkaTemplate<>(pf, true);
         kafkaTemplate.setDefaultTopic(sartKafkaConfiguration.getDomainQueryTopic());
         return kafkaTemplate;

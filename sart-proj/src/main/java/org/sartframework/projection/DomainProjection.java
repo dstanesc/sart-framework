@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import org.sartframework.aggregate.SynchHandler;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
-import org.sartframework.query.AbstractQuery;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.result.EmptyResult;
 import org.sartframework.result.EndResult;
@@ -86,17 +85,19 @@ public interface DomainProjection<P extends ProjectedEntity, R extends QueryResu
             throw new UnsupportedOperationException("Invalid transaction isolation level : " + isolation);
     }
 
-    default List<? super QueryResult> resultList(AbstractQuery query, List<P> entityList) {
+    default List<? extends QueryResult> resultList(DomainQuery query, List<P> entityList) {
+        
         return entityList.isEmpty() ? emptyResult(query) : nonEmptyResult(query, entityList);
     }
 
-    default List<? super QueryResult> emptyResult(AbstractQuery query) {
+    default List<? extends QueryResult> emptyResult(DomainQuery query) {
+        
         return query.isQuerySubscription() ? new ArrayList<>(0) : Arrays.asList(new EmptyResult(query.getQueryKey()));
     }
 
-    default List<? super QueryResult> nonEmptyResult(AbstractQuery query, List<P> entityList) {
+    default List<? extends QueryResult> nonEmptyResult(DomainQuery query, List<P> entityList) {
 
-        List<? super QueryResult> resultList = entityList.stream().map(e -> {
+        List<QueryResult> resultList = entityList.stream().map(e -> {
 
             return newQueryResult(query, e);
 
@@ -109,5 +110,5 @@ public interface DomainProjection<P extends ProjectedEntity, R extends QueryResu
         return resultList;
     }
 
-    R newQueryResult(AbstractQuery query, P projectedEntity);
+    R newQueryResult(DomainQuery query, P projectedEntity);
 }

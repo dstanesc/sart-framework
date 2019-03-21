@@ -1,8 +1,10 @@
 package org.sartframework.demo.cae.event;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.demo.cae.command.InputDeckUndoDeleteCommand;
 import org.sartframework.event.GenericAggregateDeletedEvent;
 
+@Evolvable(identity="cae.event.InputDeckDeleted", version = 1)
 public class InputDeckDeletedEvent extends GenericAggregateDeletedEvent<InputDeckUndoDeleteCommand> {
 
     public InputDeckDeletedEvent() {}

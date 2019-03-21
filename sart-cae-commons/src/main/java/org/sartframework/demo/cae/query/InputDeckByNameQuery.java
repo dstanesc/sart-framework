@@ -1,7 +1,9 @@
 package org.sartframework.demo.cae.query;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.query.AbstractQuery;
 
+@Evolvable(identity="cae.query.InputDeckByName", version = 1)
 public class InputDeckByNameQuery extends AbstractQuery {
 
     String inputDeckName;

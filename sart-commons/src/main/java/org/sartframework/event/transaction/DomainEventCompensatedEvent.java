@@ -1,10 +1,12 @@
 package org.sartframework.event.transaction;
 
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.GenericDomainEvent;
 import org.sartframework.event.TransactionEvent;
 
+@Evolvable(version = 1)
 public class DomainEventCompensatedEvent extends GenericDomainEvent<DomainCommand> implements TransactionEvent {
 
     DomainEvent<? extends DomainCommand> domainEvent;

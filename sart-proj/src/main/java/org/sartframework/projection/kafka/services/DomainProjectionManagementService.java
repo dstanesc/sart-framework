@@ -7,11 +7,13 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Produced;
+import org.sartframework.aggregate.HandlerNotFound;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.kafka.serializers.SartSerdes;
+import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.projection.kafka.query.KafkaDomainProjection;
 import org.sartframework.query.DomainQuery;
+import org.sartframework.result.EmptyResult;
 import org.sartframework.service.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +41,7 @@ public class DomainProjectionManagementService<T> implements ManagedService<Doma
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        builder.stream(projection.getEventTopic(), Consumed.<String, DomainEvent<?>> with(Serdes.String(), SartSerdes.Proto()))
+        builder.stream(projection.getEventTopic(), Consumed.<String, DomainEvent<?>> with(Serdes.String(), SartSerdes.DomainEventSerde()))
 
             .filter((agregateKey, event) -> {
 
@@ -53,12 +55,19 @@ public class DomainProjectionManagementService<T> implements ManagedService<Doma
 
             .foreach((agregateKey, event) -> {
 
-                LOGGER.info("Domain projection handling event projection={}, event={}", projection.getName(), event);
+                try {
+                    LOGGER.info("Domain projection handling event projection={}, event={}", projection.getName(), event);
 
-                projection.handle(event);
+                    projection.handle(event);
+                    
+                } catch (HandlerNotFound e) {
+                   
+                    LOGGER.error("Handler missing in projection. Use @DomainEventHandler annotation on {}#methodName({} domainEvent)", e.getHandlingClass(), e.getArgumentType());
+                    LOGGER.error("Handler missing in projection.", e);
+                }
             });
 
-        builder.stream(projection.getQueryTopic(), Consumed.<String, DomainQuery> with(Serdes.String(), SartSerdes.Proto()))
+        builder.stream(projection.getQueryTopic(), Consumed.<String, DomainQuery> with(Serdes.String(), SartSerdes.DomainQuerySerde()))
         
             .filter((queryKey, query) -> {
 
@@ -74,11 +83,20 @@ public class DomainProjectionManagementService<T> implements ManagedService<Doma
 
                 LOGGER.info("Domain projection handling query projection={}, query={}", projection.getName(), query);
 
-                return projection.handleQuery(query);
+               try {
+                    
+                    return projection.handleQuery(query);
+                    
+                } catch (HandlerNotFound e) {
 
+                    LOGGER.error("Handler missing in projction. Use @DomainQuery annotation on {}#methodName({} domainEvent)", e.getHandlingClass(), e.getArgumentType());
+                    LOGGER.error("Handler missing in projection.", e);
+                    
+                    return projection.emptyResult(query);
+                }
             })
 
-            .to(projection.getQueryResultTopic(), Produced.with(Serdes.String(), SartSerdes.Proto()));
+            .to(projection.getQueryResultTopic(), Produced.with(Serdes.String(), SartSerdes.QueryResultSerde()));
 
         Topology projectionTopology = builder.build();
 

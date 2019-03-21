@@ -172,7 +172,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
     }
 
     @DomainQueryHandler
-    public List<? super QueryResult> findByInputDeckId(InputDeckByIdQuery query) {
+    public List<? extends QueryResult> findByInputDeckId(InputDeckByIdQuery query) {
 
         LOGGER.info("Handling InputDeckByIdQuery {}", query.getInputDeckId());
 
@@ -188,7 +188,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
     }
 
     @DomainQueryHandler
-    public List<? super QueryResult> findByXmin(InputDeckByXidQuery query) {
+    public List<? extends QueryResult> findByXmin(InputDeckByXidQuery query) {
 
         LOGGER.info("Handling InputDeckByXidQuery {}", query.getXid());
 
@@ -204,7 +204,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
     }
 
     @DomainQueryHandler
-    public List<? super QueryResult> findByInputDeckName(InputDeckByNameQuery query) {
+    public List<? extends QueryResult> findByInputDeckName(InputDeckByNameQuery query) {
 
         LOGGER.info("Handling InputDeckByNameQuery {}", query.getInputDeckName());
 
@@ -221,7 +221,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
 
     
     @Override
-    public InputDeckQueryResult newQueryResult(AbstractQuery query, InputDeckEntity e) {
+    public InputDeckQueryResult newQueryResult(DomainQuery query, InputDeckEntity e) {
         return new InputDeckQueryResult(query.getQueryKey(), e.getXmin(), e.getAggregateKey(), e.getAggregateVersion(), e.getEntityCreationTime(),
             e.getInputDeckName(), e.getInputDeckFile());
     }

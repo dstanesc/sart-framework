@@ -7,7 +7,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.kafka.serializers.SartSerdes;
+import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.projection.ProjectionConfiguration;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.result.EmptyResult;
@@ -55,7 +55,7 @@ public class QueryResultListenerService<T> implements ManagedService<QueryResult
 
         builder
 
-            .stream(projectionConfiguration.getQueryResultTopic(), Consumed.<String, QueryResult> with(Serdes.String(), SartSerdes.Proto()))
+            .stream(projectionConfiguration.getQueryResultTopic(), Consumed.<String, QueryResult> with(Serdes.String(), SartSerdes.QueryResultSerde()))
 
             .filter((resultKey, result) -> (resultKey.equals(getDomainQuery().getQueryKey())))
 

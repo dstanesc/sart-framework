@@ -7,11 +7,12 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Produced;
+import org.sartframework.aggregate.HandlerNotFound;
 import org.sartframework.event.QueryEvent;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.event.query.QueryUnsubscribedEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
-import org.sartframework.kafka.serializers.SartSerdes;
+import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.projection.kafka.query.KafkaTransactionProjection;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.result.QueryResult;
@@ -42,7 +43,7 @@ public class TransactionProjectionManagementService<T> implements ManagedService
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        builder.stream(transactionProjection.getEventTopic(), Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.Proto()))
+        builder.stream(transactionProjection.getEventTopic(), Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.TransactionEventSerde()))
 
             .filter((xid, event) -> {
 
@@ -58,10 +59,18 @@ public class TransactionProjectionManagementService<T> implements ManagedService
 
                 LOGGER.info("Transaction projection handling event projection={}, event={}", transactionProjection.getName(), event);
 
-                transactionProjection.handle(event);
+                try {
+                    
+                    transactionProjection.handle(event);
+                    
+                } catch (HandlerNotFound e) {
+                    //probably failure is better but this also would leave txn stream processing corrupted forever
+                    LOGGER.error("Handler missing in transaction aggregate. Use @DomainEventHandler annotation on {}#methodName({} domainCommand)", e.getHandlingClass(), e.getArgumentType());
+                    LOGGER.error("Handler missing in aggregate", e);
+                }
             });
 
-        builder.stream(transactionProjection.getQueryTopic(), Consumed.<String, DomainQuery> with(Serdes.String(), SartSerdes.Proto()))
+        builder.stream(transactionProjection.getQueryTopic(), Consumed.<String, DomainQuery> with(Serdes.String(), SartSerdes.DomainQuerySerde()))
 
             .filter((queryKey, query) -> {
 
@@ -82,10 +91,10 @@ public class TransactionProjectionManagementService<T> implements ManagedService
 
             })
 
-            .to(transactionProjection.getQueryResultTopic(), Produced.with(Serdes.String(), SartSerdes.Proto()));
+            .to(transactionProjection.getQueryResultTopic(), Produced.with(Serdes.String(), SartSerdes.QueryResultSerde()));
         
         
-        builder.stream(transactionProjection.getQueryEventTopic(), Consumed.<String, QueryEvent> with(Serdes.String(), SartSerdes.Proto()))
+        builder.stream(transactionProjection.getQueryEventTopic(), Consumed.<String, QueryEvent> with(Serdes.String(), SartSerdes.QueryEventSerde()))
         
             .foreach((queryKey, queryEvent) -> {
                 if (queryEvent instanceof QueryUnsubscribedEvent) {

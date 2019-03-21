@@ -6,6 +6,7 @@ import java.util.Map;
 import org.sartframework.aggregate.AnnotatedDomainAggregate;
 import org.sartframework.annotation.DomainCommandHandler;
 import org.sartframework.annotation.DomainEventHandler;
+import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.demo.cae.command.ForceValidationFailureCommand;
 import org.sartframework.demo.cae.command.InputDeckAddResultCommand;
@@ -23,7 +24,7 @@ import org.sartframework.event.DomainEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+@Evolvable(identity="cae.aggregate.SimulationAggregate", version = 1)
 public class SimulationAggregate extends AnnotatedDomainAggregate {
 
     final static Logger LOGGER = LoggerFactory.getLogger(SimulationAggregate.class);
