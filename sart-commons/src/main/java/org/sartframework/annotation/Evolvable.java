@@ -8,7 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import org.sartframework.serializers.ContentSerializer;
-import org.sartframework.serializers.protostuff.ContentSerializerProtostuff;
+import org.sartframework.serializers.UnspecifiedContentSerializer;
 
 @Documented
 @Retention(RUNTIME)
@@ -19,5 +19,5 @@ public @interface Evolvable {
     
     String identity() default "";
     
-    Class<?> serializer() default ContentSerializerProtostuff.class;
+    Class<? extends ContentSerializer> serializer() default UnspecifiedContentSerializer.class;
 }

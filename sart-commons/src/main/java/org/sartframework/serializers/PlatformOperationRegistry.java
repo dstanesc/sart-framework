@@ -14,6 +14,7 @@ import org.sartframework.event.QueryEvent;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.result.QueryResult;
+import org.sartframework.serializers.protostuff.ContentSerializerProtostuff;
 import org.sartframework.session.RunningTransactions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,9 @@ public class PlatformOperationRegistry {
     Map<String, VersionChain<?>> versionsByIdentity = new HashMap<>();
 
     Map<Class<?>, Adapter<?>> adapterRegistry = new HashMap<>();
-
+    
+    Class<?> defaultContentSerializer;
+    
     public final static PlatformOperationRegistry get() {
 
         return instance;
@@ -56,7 +59,22 @@ public class PlatformOperationRegistry {
         return this;
     }
 
+    public PlatformOperationRegistry registerDefaultContentSerializer(Class<?> defaultContentSerializer) {
+    
+        this.defaultContentSerializer = defaultContentSerializer;
+        
+        return this;
+    }
+    
+    public Class<?> getDefaultContentSerializer() {
+        
+        
+        return  defaultContentSerializer;
+    }
+    
     public PlatformOperationRegistry registerDefaults() {
+        
+        registerDefaultContentSerializer(ContentSerializerProtostuff.class);
 
         registerOperationCategory(DomainAggregate.class, "org.sartframework");
         registerOperationCategory(DomainCommand.class, "org.sartframework");

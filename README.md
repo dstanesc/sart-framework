@@ -864,8 +864,102 @@ or queried on-demand from the built-in conflict resolution projections, eg.
 ```
 
 
-## Serialization
+## Functional Evolution
 
+Any application following SART principles described so far exposes scalability characteristics more or less congruent with wide scale deployments. However there are emergent properties of large and complex systems which need pro-actively accounted for. 
+
+For instance a large system cannot be managed anymore as a single unit, the software needs partitioned into components having right granularity when correlated with the business case. Even further such large systems do not afford anymore a general orchestrated down-time and probably not even partial functional down-times, the system as a whole and any specific functionality has simply to remain available 24/7. 
+
+Even more, such systems need to evolve and because of the size, functional updates are becoming part of daily operations. The million dollar question becomes not only how to upgrade software components in such environment but how to ensure that individual upgrades do not disrupt in any way ongoing operations. For instance in simulation data management is critical that long running simulation jobs (ie. started 1 week before) are continued and complete successfully even if an upgrade process happened during their execution.
+
+The adopted and evolved CQRS style is an enabler in that multiple _Domain Views_ (or _Domain View_ versions) can simply coexist. That is, when new query cases are introduced new _Domain Views_ can be naturally spawned and be initialized from the _Domain Log_ (more specifically from the _Domain Event Log_) which, as we have learned, preserves all historical state transitions. As far as a version based correlation between software modules and _Domain Views_ (aka. projections) the new versions can coexist with the historical ones. Retiring old (version) functionality becomes more or less a business decision and is simply a life cycle operation of redirecting requests from _Domain Views_ to be retired to the latest versions. Interesting to observe that this is not even a binary choice, multiple versions of the same service can be maintained at any moment in time.
+
+Equivalent principles need to cover however not only the projections but also the source of truth for SART system, which are the structures / operations stored with the _Domain Logs_. The request is that the framework postulates the rules required for the organic, iterative and incremental evolution of the logged data structures (ie. _Domain Commands_, _Domain Events_, _Domain Queries_, _Domain Results_ and _Domain Aggregates_).
+
+### Functional growth and compatibility rules
+
+We postulate that continuous system evolution is possible if:
+
+__A. New components__ can process __old versions of the logged data structures__
+
+__B. Old components__ can process __new versions of the logged data structures__
+
+__C. The version employed for the deserialization__ of the logged structures __is a runtime choice__
+
+__D. The deserialization platform__ can __fill missing values__ when mandatory new attribution is inexistent in older versions 
+
+A system with all above prerequisites met can guarantee the compatibility between the software component and their underlying logged structures, eg. between evolving _Domain Commands_ or _Domain Events_ and corresponding _Domain Views_ or clients.
+
+Therefore __versioning__ and __serialization__ aspects of all domain specific artifacts (ie. _Domain Commands_, _Domain Events_, _Domain Queries_, _Domain Results_ and _Domain Aggregates_) are first class descriptors and actually mandatory when implementing any SART based system. __Versioning, identity and serialization mechanism__ is specified via the `@Evolvable` annotation. For instance:
+
+
+```java
+@Evolvable(identity="cae.event.InputDeckCreated", version = 1)
+class InputDeckCreatedEvent extends GenericAggregateCreatedEvent<InputDeckDeleteCommand> {
+    //...
+}
+```
+where
+
+* __Unspecified identity__ defaults to the __unqualified name of the java class__, hence subsequent class versions would have to preserve the class name and provide an alternate namespace / package, evtl. encoding the version number
+* __Unspecified serializer__ defaults to __platform default content serializer/deserializer__
+
+```java
+@Documented
+@Retention(RUNTIME)
+@Target(TYPE)
+public @interface Evolvable {
+
+    int version();
+    
+    String identity() default "";
+    
+    Class<? extends ContentSerializer> serializer() default UnspecifiedContentSerializer.class;
+}
+```
+### Functional growth and compatibility design guidelines
+
+SART satisfies the general __continuous functional growth and compatibility requirements__ by superimposing following design restrictions:
+
+__A. The data structures should contain only non-private fields__. This simplification is only useful so that the compiler can validate potential name clashes in derived classes which is relevant for serializers / deserializers identifying fields by name rather than index.
+
+__B. Old data structure versions need preserved unchanged.__ That is once created and in use a java class will have to stay. Its structure will have to remain unchanged. 
+
+__C. Newly evolved data structures should be derived from the most recent versions.__ This is needed so that a deserialized java classes can be freely downcasted or upcasted by the platform to older or newer versions at the choice of consuming components.
+
+__D. Newly evolved data structures can include additional fields.__ 
+
+__E. Mandatory fields__  of newly evolved data structures can be __initialized by registering dedicated adapters__ associated with the specific data structure
+
+__F. As corollary__ on above rules, SART still provides the possibility to retire old data structures but the procedure has to ensure that all networked components can consume the later versions. Before retiring, the inheritance chain needs adapted so that the evicted class is no more part of it. 
+
+Below we describe a partial example of a theoretical evolution from an `OriginalCommand` to an `EvolvedCommand` :
+
+```java
+@Evolvable(identity = "test.command.create", version = 1)
+public class OriginalCommand extends GenericCreateAggregateCommand<OriginalCommand> {
+   //...       
+}
+
+@Evolvable(identity = "test.command.create", version = 2)
+public class EvolvedCommand extends OriginalCommand {
+
+    String phase;
+    //...
+}
+
+public class PhaseAdapter implements Adapter<EvolvedCommand> {
+
+    public void adapt(EvolvedCommand input) {
+       
+       input.setPhase(DEFAULT_PHASE_VALUE);
+       //...
+    }
+}
+
+PlatformOperationRegistry.get().registerAdapter(EvolvedCommand.class, new PhaseAdapter());
+
+```
 
 ## Terminology 
 

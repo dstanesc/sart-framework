@@ -10,6 +10,7 @@ import org.sartframework.command.GenericCreateAggregateCommand;
 import org.sartframework.command.GenericDestructAggregateCommand;
 import org.sartframework.event.GenericAggregateCreatedEvent;
 import org.sartframework.kafka.serializers.ProtoSerializer;
+import org.sartframework.serializers.protostuff.ContentSerializerProtostuff;
 
 
 public class SerializationTest {
@@ -129,9 +130,12 @@ public class SerializationTest {
     
     @Test
     public void test4() {
-      //  System.setProperty("protostuff.runtime.id_strategy_factory", "org.sartframework.serializers.protostuff.IdStrategyFactoryProtostuff");
-        new PlatformOperationRegistry().registerOperationCategory(DomainCommand.class, "org.sartframework").init();
-        //SerializerRegistry.registerDefaults();
+     
+        new PlatformOperationRegistry()
+        .registerDefaultContentSerializer(ContentSerializerProtostuff.class)
+        .registerOperationCategory(DomainCommand.class, "org.sartframework")
+        .init();
+
         EvolvableStructureSerializer<DomainCommand> domainCommandSerializer = new EvolvableStructureSerializer<>();
         FooCmd cmd1 = new FooCmd("key1", 1001);
         byte[] byteArray = domainCommandSerializer.serialize(cmd1);

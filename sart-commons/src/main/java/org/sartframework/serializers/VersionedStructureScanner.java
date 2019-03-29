@@ -68,12 +68,19 @@ public class VersionedStructureScanner<T> {
 
                 String structureIdentity = evolvableStructure.identity();
 
-                if (structureIdentity.trim().length() == 0)
+                if (structureIdentity.trim().length() == 0) {
+                 
                     structureIdentity = structureClassName;
+                }
 
                 int structureVersion = evolvableStructure.version();
                 
                 Class<? extends ContentSerializer<T>> serializer = (Class<? extends ContentSerializer<T>>) evolvableStructure.serializer();
+                
+                if(UnspecifiedContentSerializer.class.isAssignableFrom(serializer)) {
+                    
+                    serializer = (Class<? extends ContentSerializer<T>>) serializerRegistry.getDefaultContentSerializer();
+                }
                 
                 Constructor<? extends ContentSerializer<T>> constructor = serializer.getConstructor(Class.class);
                 
