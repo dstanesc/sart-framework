@@ -923,7 +923,7 @@ SART satisfies the general __continuous functional growth and compatibility requ
 
 __A. The data structures should contain only non-private fields__. This simplification is only useful so that the compiler can validate potential name clashes in derived classes which is relevant for serializers / deserializers identifying fields by name rather than index.
 
-__B. Old data structure versions need preserved unchanged.__ That is once created and in use a java class will have to stay. Its structure will have to remain unchanged. 
+__B. Old data structure versions need preserved unchanged.__ That is once created and in use a java class will have to stay. Its structure will have to remain unchanged. Retiring should remain possible. See the corollary at F.
 
 __C. Newly evolved data structures should be derived from the most recent versions.__ This is needed so that a deserialized java classes can be freely downcasted or upcasted by the platform to older or newer versions at the choice of consuming components.
 
