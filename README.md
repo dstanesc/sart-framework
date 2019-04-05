@@ -101,7 +101,7 @@ supporting the idea that parallel transactions consisting of disjunct or conflic
 
 ## CRDTs 
 
-__A short reference of conflict free CRTDs__ relevant to our goal (extracted from the original study <sup>[3](#r3)</sup>) including simplified visualization of the behavior when projected to _business transaction_ operations:
+__A short reference of conflict free CRTDs__ relevant to our goal (extracted from the original study<sup>[3](#r3)</sup>) including simplified visualization of the behavior when projected to _business transaction_ operations:
 
 > ##### 1. Operation based counter
 > _"Addition and subtraction commute, assuming no overflow."_ 
