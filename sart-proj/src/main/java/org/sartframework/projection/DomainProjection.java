@@ -92,7 +92,7 @@ public interface DomainProjection<P extends ProjectedEntity, R extends QueryResu
 
     default List<? extends QueryResult> emptyResult(DomainQuery query) {
         
-        return query.isQuerySubscription() ? new ArrayList<>(0) : Arrays.asList(new EmptyResult(query.getQueryKey()));
+        return query.isQuerySubscription() ? new ArrayList<>(0) : Arrays.asList(new EmptyResult(query.getSystemSnapshot().getSid(), query.getQueryKey()));
     }
 
     default List<? extends QueryResult> nonEmptyResult(DomainQuery query, List<P> entityList) {

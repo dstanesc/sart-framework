@@ -17,7 +17,8 @@ public abstract class AbstractQuery implements DomainQuery {
     public AbstractQuery() {
         super();
     }
-
+    
+   
     @Override
     public final String getQueryKey() {
         return queryKey;
@@ -41,7 +42,6 @@ public abstract class AbstractQuery implements DomainQuery {
    
     public final void setQuerySubscription(boolean subscription) {
         this.querySubscription = subscription;
-
     }
     
     public final void setQueryKey(String queryKey) {

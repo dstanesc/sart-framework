@@ -1,6 +1,5 @@
 package org.sartframework.driver;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -14,6 +13,7 @@ import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
+import org.sartframework.session.SystemTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,16 +23,13 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
     private TransactionDriverInternal transactionDriverInternal;
 
-    private TransactionDriver transactionDriver;
+    private SystemTransaction localTransaction;
 
-    private Long xid;
-
-    private Isolation isolation = Isolation.READ_SNAPSHOT;
+    private Isolation isolation;
 
     AtomicInteger commandSequenceCounter = new AtomicInteger(0);
 
-    public DefaultDomainTransaction(TransactionDriver transactionDriver, TransactionDriverInternal transactionDriverInternal) {
-        this.transactionDriver = transactionDriver;
+    public DefaultDomainTransaction(TransactionDriverInternal transactionDriverInternal) {
         this.transactionDriverInternal = transactionDriverInternal;
     }
 
@@ -53,7 +50,7 @@ public class DefaultDomainTransaction implements DomainTransaction {
         return isolation;
     }
 
-    private int getIsolationNumber() {
+    protected int getIsolationNumber() {
         switch (isolation) {
             case READ_UNCOMMITTED:
                 return 1;
@@ -69,33 +66,38 @@ public class DefaultDomainTransaction implements DomainTransaction {
     @Override
     public long getXid() {
 
-        if (xid == null)
+        if (localTransaction == null)
             throw new TransactionNotStartedException();
 
-        return xid;
+        return localTransaction.getXid();
     }
+    
+
+    public String getSid() {
+
+        if (localTransaction == null)
+            throw new TransactionNotStartedException();
+
+        return localTransaction.getSid();
+    }
+    
 
     @Override
     public Status getStatus() {
 
-        try {
+        int status = getTransactionDriver().statusTransactionInternal(getXid());
 
-            int status = getTransactionDriver().statusTransactionInternal(getXid());
-
-            switch (status) {
-                case 1:
-                    return Status.CREATED;
-                case 2:
-                    return Status.RUNNING;
-                case 8:
-                    return Status.COMMITED;
-                case 64:
-                    return Status.ABORTED;
-                default:
-                    return Status.UNKNOWN;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        switch (status) {
+            case 1:
+                return Status.CREATED;
+            case 2:
+                return Status.RUNNING;
+            case 8:
+                return Status.COMMITED;
+            case 64:
+                return Status.ABORTED;
+            default:
+                return Status.UNKNOWN;
         }
     }
 
@@ -107,8 +109,10 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
-            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType,
-                resultConsumer);
+            TransactionDriverInternal driver = getTransactionDriver();
+            
+            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer, null, null);
+            
         });
 
         return this;
@@ -121,8 +125,9 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
-            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType,
-                resultConsumer, onComplete);
+            TransactionDriverInternal driver = getTransactionDriver();
+            
+            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer, null, onComplete);
         });
 
         return this;
@@ -136,25 +141,22 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
-            getTransactionDriver().onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType,
-                resultConsumer, errorConsumer, onComplete);
+            TransactionDriverInternal driver = getTransactionDriver();
+            
+            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer, errorConsumer, onComplete);
         });
 
         return this;
     }
 
-    private SystemSnapshot getSystemSnapshot(TransactionStartedEvent startEvent) {
+    protected SystemSnapshot getSystemSnapshot(TransactionStartedEvent startEvent) {
         switch (getIsolation()) {
             case READ_UNCOMMITTED:
-                return null;
+                return startEvent.getSystemSnapshot();
             case READ_SNAPSHOT:
                 return startEvent.getSystemSnapshot();
             case READ_COMMITTED:
-                try {
-                    return getTransactionDriver().snapshotTransactionInternal(getXid());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                return getTransactionDriver().snapshotTransactionInternal(getXid());
             default:
                 throw new IllegalStateException("Unsupported isolation level : " + getIsolation());
         }
@@ -163,63 +165,36 @@ public class DefaultDomainTransaction implements DomainTransaction {
     @Override
     public DomainTransaction next() {
 
-        try {
+        this.localTransaction = getTransactionDriver().nextTransactionInternal();
 
-            this.xid = getTransactionDriver().nextTransactionInternal();
-
-            return this;
-
-        } catch (IOException e) {
-
-            throw new RuntimeException(e);
-        }
+        return this;
     }
 
     @Override
     public DomainTransaction start() {
 
-        try {
+        getTransactionDriver().startTransactionInternal(getXid(), getIsolationNumber());
 
-            getTransactionDriver().startTransactionInternal(getXid(), getIsolationNumber());
-
-            return this;
-
-        } catch (IOException e) {
-
-            throw new RuntimeException(e);
-        }
+        return this;
     }
 
     @Override
     public DomainTransaction commit() {
 
-        try {
+        LOGGER.info("Committing xid={} ", getXid());
 
-            LOGGER.info("Committing xid={} ", getXid());
+        getTransactionDriver().commitTransactionInternal(getXid(), getCommandSequenceCounter().get());
 
-            getTransactionDriver().commitTransactionInternal(getXid(), getCommandSequenceCounter().get());
+        return this;
 
-            return this;
-
-        } catch (IOException e) {
-
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
     public DomainTransaction abort() {
 
-        try {
+        getTransactionDriver().abortTransactionInternal(getXid());
 
-            getTransactionDriver().abortTransactionInternal(getXid());
-
-            return this;
-
-        } catch (IOException e) {
-
-            throw new RuntimeException(e);
-        }
+        return this;
     }
 
     @Override
@@ -301,8 +276,10 @@ public class DefaultDomainTransaction implements DomainTransaction {
         return transactionDriverInternal;
     }
 
+    @Override
     public TransactionDriver getDriver() {
 
-        return transactionDriver;
+        return transactionDriverInternal;
     }
+
 }

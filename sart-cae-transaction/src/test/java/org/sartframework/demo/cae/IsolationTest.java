@@ -7,15 +7,15 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.sartframework.command.transaction.TransactionStatus.Isolation;
-import org.sartframework.demo.cae.client.RemoteInputDeckQueryApi;
-import org.sartframework.demo.cae.client.RemoteSimulationApi;
+import org.sartframework.demo.cae.client.RestInputDeckQueryApi;
+import org.sartframework.demo.cae.client.RestSimulationApi;
 import org.sartframework.demo.cae.command.InputDeckCreateCommand;
 import org.sartframework.demo.cae.query.InputDeckByIdQuery;
 import org.sartframework.demo.cae.query.InputDeckByNameQuery;
 import org.sartframework.demo.cae.result.InputDeckQueryResult;
 import org.sartframework.driver.DomainTransaction;
-import org.sartframework.driver.RemoteTransactionApi;
-import org.sartframework.driver.RemoteTransactionDriver;
+import org.sartframework.driver.RestTransactionApi;
+import org.sartframework.driver.DefaultRestTransactionDriver;
 import org.sartframework.driver.TransactionDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +28,8 @@ public class IsolationTest extends AbstractCaeTest {
     @Test
     public void testReadSnapshotIsolationNotFound() {
 
-        TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
-            .registerProjectionApi(new RemoteInputDeckQueryApi()).registerCommandApi(new RemoteSimulationApi()).init();
+        TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
 
         String j = nextInputDeckIdentity();
 
@@ -84,8 +84,8 @@ public class IsolationTest extends AbstractCaeTest {
 
     @Test
     public void testReadCommitedIsolationNotFound() {
-        TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
-            .registerProjectionApi(new RemoteInputDeckQueryApi()).registerCommandApi(new RemoteSimulationApi()).init();
+        TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
 
         String j = nextInputDeckIdentity();
 
@@ -140,8 +140,8 @@ public class IsolationTest extends AbstractCaeTest {
 
     @Test
     public void testReadUncommitedIsolationFound() {
-        TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
-            .registerProjectionApi(new RemoteInputDeckQueryApi()).registerCommandApi(new RemoteSimulationApi()).init();
+        TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
 
         String j = nextInputDeckIdentity();
 
@@ -196,8 +196,8 @@ public class IsolationTest extends AbstractCaeTest {
     @Test
     public void testReadSnapshotIsolationFound() throws Exception {
 
-        TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
-            .registerProjectionApi(new RemoteInputDeckQueryApi()).registerCommandApi(new RemoteSimulationApi()).init();
+        TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 
@@ -226,8 +226,8 @@ public class IsolationTest extends AbstractCaeTest {
     @Test
     public void testReadCommittedIsolationFound() throws Exception {
 
-        TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
-            .registerProjectionApi(new RemoteInputDeckQueryApi()).registerCommandApi(new RemoteSimulationApi()).init();
+        TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

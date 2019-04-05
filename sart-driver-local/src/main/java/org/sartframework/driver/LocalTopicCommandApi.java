@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.sartframework.command.DomainCommand;
 
-public class CommandLocalApi {
+public class LocalTopicCommandApi {
 
     Set<Class<? extends DomainCommand>> supportedCommands = new HashSet<>();
 

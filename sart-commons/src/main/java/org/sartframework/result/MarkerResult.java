@@ -2,6 +2,8 @@ package org.sartframework.result;
 
 public abstract class MarkerResult implements QueryResult {
 
+    String sid;
+    
     String queryKey;
     
     long resultCreationTime;
@@ -10,10 +12,20 @@ public abstract class MarkerResult implements QueryResult {
         super();
     }
 
-    public MarkerResult(String queryKey) {
+    public MarkerResult(String sid, String queryKey) {
         super();
+        this.sid = sid;
         this.queryKey = queryKey;
         this.resultCreationTime = System.currentTimeMillis();
+    }
+
+    @Override
+    public String getSid() {
+        return sid;
+    }
+
+    public void setSid(String sid) {
+        this.sid = sid;
     }
 
     @Override

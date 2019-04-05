@@ -9,6 +9,7 @@ import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.session.SystemSnapshot;
+import org.sartframework.session.SystemTransaction;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,7 +28,7 @@ public interface BusinessTransactionManager extends Publisher {
 
     public final int STATUS_ABORTED = 64;
     
-    long nextTransaction();
+    SystemTransaction nextTransaction();
     
     int status(long xid);
     

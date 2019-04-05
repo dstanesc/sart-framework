@@ -11,7 +11,7 @@ public class RunningTransactions {
     
     TransactionEvent lastEvent;
     
-    Long highestCommited = -1L;
+    Long highestCommitted = -1L;
 
     SortedSet<Long> txn;
 
@@ -39,17 +39,17 @@ public class RunningTransactions {
         this.lastEvent = lastEvent;
     }
 
-    public Long getHighestCommited() {
-        return highestCommited;
+    public Long getHighestCommitted() {
+        return highestCommitted;
     }
 
-    public void setHighestCommited(Long higestCommited) {
-        this.highestCommited = higestCommited;
+    public void setHighestCommitted(Long higestCommited) {
+        this.highestCommitted = higestCommited;
     }
 
     public void updateHighestCommited(Long other) {
-        if(other > highestCommited) {
-            setHighestCommited(other);
+        if(other > highestCommitted) {
+            setHighestCommitted(other);
         }
     }
 }

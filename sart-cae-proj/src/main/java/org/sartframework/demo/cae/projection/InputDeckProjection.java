@@ -160,7 +160,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
 
     protected void emit(InputDeckEntity inputDeckEntity) {
 
-        InputDeckQueryResult result = new InputDeckQueryResult(QueryResult.BROADCAST_RESULT_QUERY_KEY, inputDeckEntity.getXmin(),
+        InputDeckQueryResult result = new InputDeckQueryResult(kafkaStreamsConfiguration.getSid(), QueryResult.BROADCAST_RESULT_QUERY_KEY, inputDeckEntity.getXmin(),
             inputDeckEntity.getAggregateKey(), inputDeckEntity.getAggregateVersion(), inputDeckEntity.getEntityCreationTime(), 
             inputDeckEntity.getInputDeckName(), inputDeckEntity.getInputDeckFile());
 
@@ -222,7 +222,7 @@ public class InputDeckProjection extends KafkaDomainProjection <InputDeckEntity,
     
     @Override
     public InputDeckQueryResult newQueryResult(DomainQuery query, InputDeckEntity e) {
-        return new InputDeckQueryResult(query.getQueryKey(), e.getXmin(), e.getAggregateKey(), e.getAggregateVersion(), e.getEntityCreationTime(),
+        return new InputDeckQueryResult(kafkaStreamsConfiguration.getSid(), query.getQueryKey(), e.getXmin(), e.getAggregateKey(), e.getAggregateVersion(), e.getEntityCreationTime(),
             e.getInputDeckName(), e.getInputDeckFile());
     }
 

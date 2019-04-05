@@ -38,7 +38,7 @@ public class DomainCommandProcessor implements Processor<String, DomainCommand>{
    
         this.context = context;
         
-        this.aggregateStore = (KeyValueStore<String, AnnotatedDomainAggregate>) context.getStateStore(kafkaStreamsConfiguration.getAggregate().getStore().getName());
+        this.aggregateStore = (KeyValueStore<String, AnnotatedDomainAggregate>) context.getStateStore(kafkaStreamsConfiguration.getAggregateStoreName());
     }
 
     @Override

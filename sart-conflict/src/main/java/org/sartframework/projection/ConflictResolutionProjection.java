@@ -64,7 +64,7 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection <Co
                 e.getWinnerVersion(), e.getOtherVersion(), e.getWinnerXid(), e.getOtherXid(), e.getWinnerEvent(), e.getOtherEvent());
             repository.saveAndFlush(conflictResolvedEntity);
 
-            ConflictResolvedResult result = new ConflictResolvedResult(QueryResult.BROADCAST_RESULT_QUERY_KEY, e.getOtherXid(), e.getAggregateKey(),
+            ConflictResolvedResult result = new ConflictResolvedResult(kafkaStreamsConfiguration.getSid(), QueryResult.BROADCAST_RESULT_QUERY_KEY, e.getOtherXid(), e.getAggregateKey(),
                 e.getChangeKey(), e.getWinnerVersion(), e.getOtherVersion(), e.getWinnerXid(), e.getOtherXid(), e.getWinnerEvent(),
                 e.getOtherEvent());
 
@@ -104,7 +104,7 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection <Co
         LOGGER.info("non-empty conflict result {}", entityList.size());
 
         List<? super QueryResult> resultList = entityList.stream()
-            .map(entity -> new ConflictResolvedResult(query.getQueryKey(), entity.getOtherXid(), entity.getAggregateKey(), entity.getChangeKey(),
+            .map(entity -> new ConflictResolvedResult(kafkaStreamsConfiguration.getSid(), query.getQueryKey(), entity.getOtherXid(), entity.getAggregateKey(), entity.getChangeKey(),
                 entity.getWinnerVersion(), entity.getOtherVersion(), entity.getWinnerXid(), entity.getOtherXid(), entity.getWinnerEvent(),
                 entity.getOtherEvent()))
             .collect(Collectors.toList());
@@ -119,7 +119,7 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection <Co
 
         LOGGER.info("empty conflict result");
 
-        return query.isQuerySubscription() ? new ArrayList<>(0) : Arrays.asList(new EmptyResult(query.getQueryKey()));
+        return query.isQuerySubscription() ? new ArrayList<>(0) : Arrays.asList(new EmptyResult(kafkaStreamsConfiguration.getSid(), query.getQueryKey()));
     }
 
     @Override

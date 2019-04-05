@@ -25,6 +25,7 @@ import org.sartframework.projection.ProjectionConfiguration;
 import org.sartframework.projection.kafka.services.QueryResultListenerService;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
+import org.sartframework.session.SystemTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -37,15 +38,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ReplayProcessor;
 
-public class LocalTransactionDriver implements TransactionDriverInternal, TransactionDriver, LocalDriver {
+public class DefaultTopicTransactionDriver implements TransactionDriverInternal, SiteTransactionDriver, TopicTransactionDriver {
 
-    final static Logger LOGGER = LoggerFactory.getLogger(LocalTransactionDriver.class);
+    final static Logger LOGGER = LoggerFactory.getLogger(DefaultTopicTransactionDriver.class);
 
-    RemoteApi transactionApi;
+    RestRemoteApi transactionApi;
 
-    Set<QueryLocalApi> projectionApis = new HashSet<>();
+    Set<TopicQueryApi> queryApis = new HashSet<>();
 
-    Set<CommandLocalApi> commandApis = new HashSet<>();
+    Set<LocalTopicCommandApi> commandApis = new HashSet<>();
 
     WebClient transactionClient;
 
@@ -53,9 +54,15 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
 
     Map<Long,ClientTransactionLifecycleMonitorService> monitorServices = new HashMap<>();
 
-    public LocalTransactionDriver(KafkaWriters writeChannels) {
+    public DefaultTopicTransactionDriver(KafkaWriters writeChannels) {
         super();
         this.writeChannels = writeChannels;
+    }
+
+    @Override
+    public String getSid() {
+        // FIXME dstanesc -- Auto-generated method stub
+        return null;
     }
 
     @Override
@@ -65,19 +72,19 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
     }
 
     @Override
-    public LocalDriver registerTransactionApi(RemoteTransactionApi transactionListener) {
+    public TopicTransactionDriver registerTransactionApi(RestTransactionApi transactionListener) {
         this.transactionApi = transactionListener;
         return this;
     }
 
     @Override
-    public LocalDriver registerProjectionApi(QueryLocalApi projectionListener) {
-        projectionApis.add(projectionListener);
+    public TopicTransactionDriver registerProjectionApi(TopicQueryApi projectionListener) {
+        queryApis.add(projectionListener);
         return this;
     }
 
     @Override
-    public LocalDriver registerCommandApi(CommandLocalApi api) {
+    public TopicTransactionDriver registerCommandApi(LocalTopicCommandApi api) {
         commandApis.add(api);
         return this;
     }
@@ -91,7 +98,7 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
     @Override
     public DomainTransaction createDomainTransaction(Isolation isolation) {
 
-        DomainTransaction transaction = new DefaultDomainTransaction(this, this).setIsolation(isolation).next();
+        DomainTransaction transaction = new DefaultDomainTransaction(this).setIsolation(isolation).next();
 
         long xid = transaction.getXid();
 
@@ -109,90 +116,158 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
         
         return transaction;
     }
-
+    
+    
     @Override
-    public long nextTransactionInternal() throws IOException {
+    public SystemTransaction nextTransactionInternal() {
 
-        String apiUrl = "/transaction/get";
+        try {
+            String apiUrl = "/transaction/get";
 
-        Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+            Request request = Request.Get(transactionApi.toUrl() + apiUrl);
 
-        long xid = Long.parseLong(performRequest(request));
+            String jsonTransaction = performRequest(request);
 
-        LOGGER.info("Acquired unique xid {}", xid);
+            LOGGER.info("Acquired unique sid, xid {}", jsonTransaction);
 
-        return xid;
+            ObjectMapper mapper = new ObjectMapper();
+
+            SystemTransaction systemTransaction = mapper.readValue(jsonTransaction, SystemTransaction.class);
+            
+            return systemTransaction;
+            
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void startTransactionInternal(long xid, int isolation) throws IOException {
+    public void startTransactionInternal(long xid, int isolation) {
 
-        LOGGER.info("Start transaction {}", xid);
+        try {
+            LOGGER.info("Start transaction {}", xid);
 
-        String apiUrl = "/transaction/" + xid + "/" + isolation + "/start";
+            String apiUrl = "/transaction/" + xid + "/" + isolation + "/start";
 
-        Request request = Request.Post(transactionApi.toUrl() + apiUrl);
+            Request request = Request.Post(transactionApi.toUrl() + apiUrl);
 
-        performMappedRequest(request);
-
-    }
-
-    @Override
-    public void commitTransactionInternal(long xid, long xct) throws IOException {
-
-        LOGGER.info("Commit transaction xid={}, xct={}", xid, xct);
-
-        String apiUrl = "/transaction/" + xid + "/" + xct + "/commit";
-
-        Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
-
-        performMappedRequest(request);
+            performMappedRequest(request);
+            
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
     @Override
-    public void abortTransactionInternal(long xid) throws IOException {
+    public void commitTransactionInternal(long xid, long xct) {
 
-        LOGGER.info("Rollback transaction {}", xid);
+        try {
+            LOGGER.info("Commit transaction xid={}, xct={}", xid, xct);
 
-        String apiUrl = "/transaction/" + xid + "/abort";
+            String apiUrl = "/transaction/" + xid + "/" + xct + "/commit";
 
-        Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
+            Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
 
-        performMappedRequest(request);
+            performMappedRequest(request);
+            
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
     @Override
-    public int statusTransactionInternal(long xid) throws IOException {
+    public void abortTransactionInternal(long xid) {
 
-        String apiUrl = "/transaction/" + xid + "/status";
+        try {
+            LOGGER.info("Rollback transaction {}", xid);
 
-        Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+            String apiUrl = "/transaction/" + xid + "/abort";
 
-        int status = Integer.parseInt(performRequest(request));
+            Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
 
-        LOGGER.info("Retrieved transaction status {} -> {}", xid, status);
+            performMappedRequest(request);
+            
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        return status;
     }
 
     @Override
-    public SystemSnapshot snapshotTransactionInternal(long xid) throws IOException {
+    public int statusTransactionInternal(long xid)  {
 
-        String apiUrl = "/transaction/" + xid + "/snapshot";
+        try {
+            String apiUrl = "/transaction/" + xid + "/status";
 
-        Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+            Request request = Request.Get(transactionApi.toUrl() + apiUrl);
 
-        String jsonSnapshot = performRequest(request);
+            int status = Integer.parseInt(performRequest(request));
 
-        LOGGER.info("Retrieved transaction snapshot {} -> {}", xid, jsonSnapshot);
+            LOGGER.info("Retrieved transaction status {} -> {}", xid, status);
 
-        ObjectMapper mapper = new ObjectMapper();
+            return status;
+            
+        } catch (NumberFormatException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        SystemSnapshot snapshot = mapper.readValue(jsonSnapshot, SystemSnapshot.class);
+    @Override
+    public SystemSnapshot snapshotTransactionInternal(long xid) {
 
-        return snapshot;
+        try {
+            String apiUrl = "/transaction/" + xid + "/snapshot";
+
+            Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+
+            String jsonSnapshot = performRequest(request);
+
+            LOGGER.info("Retrieved transaction snapshot {} -> {}", xid, jsonSnapshot);
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            SystemSnapshot snapshot = mapper.readValue(jsonSnapshot, SystemSnapshot.class);
+
+            return snapshot;
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private ClientTransactionLifecycleMonitorService getMonitorService(Long xid) {
@@ -303,22 +378,39 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
                                                    Runnable onComplete) {
 
         Class<? extends DomainQuery> queryType = domainQuery.getClass();
+        
 
+        Optional<TopicQueryApi> apiOptional = queryApis.stream().filter(api -> api.hasQuerySupport(queryType)).findFirst();
+
+        if (apiOptional.isPresent()) {
+
+            TopicQueryApi queryInternalApi = apiOptional.get();
+
+            onQuery(xid, isolation, systemSnapshot, subscribe, domainQuery, resultType, resultConsumer, errorConsumer, onComplete, queryInternalApi);
+
+        } else
+            throw new UnsupportedOperationException("Unsupported query " + domainQuery);
+    }
+
+    
+    @Override
+    public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,
+                                                   Class<R> resultType, Consumer<R> resultConsumer, Consumer<? super Throwable> errorConsumer,
+                                                   Runnable onComplete, TopicQueryApi queryInternalApi) {
+
+        Class<? extends DomainQuery> queryType = domainQuery.getClass();
+        
         domainQuery.setQueryKey(UUID.randomUUID().toString());
         domainQuery.setQueryXid(xid);
         domainQuery.setSystemSnapshot(systemSnapshot);
         domainQuery.setQuerySubscription(subscribe);
         domainQuery.setIsolation(isolation);
 
-        Optional<QueryLocalApi> apiOptional = projectionApis.stream().filter(api -> api.hasQuerySupport(queryType)).findFirst();
-
-        if (apiOptional.isPresent()) {
+        if (queryInternalApi.hasQuerySupport(queryType)) {
 
             String queryKey = domainQuery.getQueryKey();
 
-            QueryLocalApi projectionInternalApi = apiOptional.get();
-
-            ProjectionConfiguration domainProjection = projectionInternalApi.getQuerySupportProjection(queryType);
+            ProjectionConfiguration domainProjection = queryInternalApi.getQuerySupportProjection(queryType);
 
             QueryResultListenerService<R> resultListenerService = new QueryResultListenerService<R>(writeChannels.getSartKafkaConfiguration(),
                 domainProjection, domainQuery).start();
@@ -339,13 +431,13 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
         } else
             throw new UnsupportedOperationException("Unsupported query " + domainQuery);
     }
-
+    
     @Override
     public <C extends DomainCommand> void sendCommand(C domainCommand) {
 
         Class<? extends DomainCommand> commandType = domainCommand.getClass();
 
-        Optional<CommandLocalApi> apiOptional = commandApis.stream().filter(api -> api.hasCommandSupport(commandType)).findFirst();
+        Optional<LocalTopicCommandApi> apiOptional = commandApis.stream().filter(api -> api.hasCommandSupport(commandType)).findFirst();
 
         if (apiOptional.isPresent()) {
 
@@ -355,17 +447,6 @@ public class LocalTransactionDriver implements TransactionDriverInternal, Transa
             throw new UnsupportedOperationException("Unsupported command " + domainCommand);
     }
 
-    @Override
-    public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,
-                                                   Class<R> resultType, Consumer<R> resultConsumer, Runnable onComplete) {
-        onQuery(xid, isolation, systemSnapshot, subscribe, domainQuery, resultType, resultConsumer, null, onComplete);
-    }
-
-    @Override
-    public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,
-                                                   Class<R> resultType, Consumer<R> resultConsumer) {
-        onQuery(xid, isolation, systemSnapshot, subscribe, domainQuery, resultType, resultConsumer, null);
-    }
 
     private void performMappedRequest(Request request) throws ClientProtocolException, IOException, JsonParseException, JsonMappingException {
 

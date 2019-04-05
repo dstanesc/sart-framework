@@ -9,8 +9,8 @@ public class EndResult extends MarkerResult {
         super();
     }
 
-    public EndResult(String resultKey) {
-        super(resultKey);
+    public EndResult(String sid, String resultKey) {
+        super(sid, resultKey);
     }
 
 }

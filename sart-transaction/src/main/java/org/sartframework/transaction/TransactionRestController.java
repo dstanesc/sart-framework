@@ -8,6 +8,7 @@ import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.session.SystemSnapshot;
+import org.sartframework.session.SystemTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ public abstract class TransactionRestController {
     }
 
     @GetMapping("/transaction/get")
-    public long getTransaction() {
+    public SystemTransaction getTransaction() {
         return transactionManager.nextTransaction();
     }
 

@@ -9,5 +9,5 @@ public interface TransactionDriver {
     DomainTransaction createDomainTransaction();
     
     DomainTransaction createDomainTransaction(Isolation isolation);
-    
+
 }

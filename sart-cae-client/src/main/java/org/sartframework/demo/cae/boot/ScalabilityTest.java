@@ -11,14 +11,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.junit.Assert;
-import org.sartframework.demo.cae.client.LocalInputDeckQueryApi;
-import org.sartframework.demo.cae.client.LocalSimulationApi;
+import org.sartframework.demo.cae.client.LocalTopicInputDeckQueryApi;
+import org.sartframework.demo.cae.client.LocalTopicSimulationApi;
 import org.sartframework.demo.cae.command.InputDeckCreateCommand;
 import org.sartframework.demo.cae.query.InputDeckByNameQuery;
 import org.sartframework.demo.cae.result.InputDeckQueryResult;
 import org.sartframework.driver.DomainTransaction;
-import org.sartframework.driver.LocalTransactionDriver;
-import org.sartframework.driver.RemoteTransactionApi;
+import org.sartframework.driver.DefaultTopicTransactionDriver;
+import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.TransactionDriver;
 import org.sartframework.kafka.channels.KafkaWriters;
 import org.slf4j.Logger;
@@ -71,10 +71,10 @@ public class ScalabilityTest {
 
     protected void createAndQuery(int count) throws InterruptedException, ExecutionException, TimeoutException {
 
-        TransactionDriver driver = new LocalTransactionDriver(writeChannels)
-            .registerTransactionApi(new RemoteTransactionApi())
-            .registerProjectionApi(new LocalInputDeckQueryApi(writeChannels.getSartKafkaConfiguration()))
-            .registerCommandApi(new LocalSimulationApi()).init();
+        TransactionDriver driver = new DefaultTopicTransactionDriver(writeChannels)
+            .registerTransactionApi(new RestTransactionApi())
+            .registerProjectionApi(new LocalTopicInputDeckQueryApi(writeChannels.getSartKafkaConfiguration()))
+            .registerCommandApi(new LocalTopicSimulationApi()).init();
 
         
 //        TransactionDriver driver = new DefaultTransactionDriver().registerTransactionApi(new TransactionApi())

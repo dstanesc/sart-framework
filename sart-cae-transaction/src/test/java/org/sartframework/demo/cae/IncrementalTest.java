@@ -8,17 +8,17 @@ import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.sartframework.demo.cae.client.RemoteInputDeckQueryApi;
-import org.sartframework.demo.cae.client.RemoteSimulationApi;
+import org.sartframework.demo.cae.client.RestInputDeckQueryApi;
+import org.sartframework.demo.cae.client.RestSimulationApi;
 import org.sartframework.demo.cae.command.InputDeckCreateCommand;
 import org.sartframework.demo.cae.command.InputDeckUpdateFileCommand;
 import org.sartframework.demo.cae.event.InputDeckCreatedEvent;
 import org.sartframework.demo.cae.query.InputDeckByNameQuery;
 import org.sartframework.demo.cae.result.InputDeckQueryResult;
-import org.sartframework.driver.RemoteTransactionDriver;
+import org.sartframework.driver.DefaultRestTransactionDriver;
 import org.sartframework.driver.DomainTransaction;
-import org.sartframework.driver.RemoteConflictQueryApi;
-import org.sartframework.driver.RemoteTransactionApi;
+import org.sartframework.driver.RestConflictQueryApi;
+import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.TransactionDriver;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
@@ -99,8 +99,8 @@ public class IncrementalTest {
     @SuppressWarnings("unused")
     public void testQueryInputDeckProjectionSyntax2() throws Exception {
 
-        TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
-            .registerProjectionApi(new RemoteInputDeckQueryApi()).registerCommandApi(new RemoteSimulationApi()).init();
+        TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
         CompletableFuture<TransactionCompletedEvent> completeLock = new CompletableFuture<>();
@@ -139,8 +139,8 @@ public class IncrementalTest {
    //@Test
     public void testInputDeckPerformanceMonitor() throws Exception {
 
-        TransactionDriver driver = new RemoteTransactionDriver().registerTransactionApi(new RemoteTransactionApi())
-            .registerProjectionApi(new RemoteInputDeckQueryApi()).registerCommandApi(new RemoteSimulationApi()).init();
+        TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

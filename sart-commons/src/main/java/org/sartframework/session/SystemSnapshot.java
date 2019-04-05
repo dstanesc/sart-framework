@@ -10,6 +10,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class SystemSnapshot {
     
+    String sid;
+    
     Long timestamp;
 
     Long highestCommitted;
@@ -32,7 +34,6 @@ public class SystemSnapshot {
         this.highestCommitted = highestCommitted;
     }
 
-
     public SortedSet<Long> getRunning() {
         if(running == null) return new TreeSet<Long>();
         return running;
@@ -46,10 +47,17 @@ public class SystemSnapshot {
         return highestCommitted == null;
     }
 
-    @Override
-    public String toString() {
-        return "SystemSnapshot [timestamp=" + timestamp + ", highestCommitted=" + highestCommitted + ", running=" + running + "]";
+    public String getSid() {
+        return sid;
     }
 
+    public void setSid(String sid) {
+        this.sid = sid;
+    }
+
+    @Override
+    public String toString() {
+        return "SystemSnapshot [sid=" + sid + ", timestamp=" + timestamp + ", highestCommitted=" + highestCommitted + ", running=" + running + "]";
+    }
 
 }

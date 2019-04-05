@@ -5,13 +5,13 @@ import org.sartframework.demo.cae.command.ForceValidationFailureCommand;
 import org.sartframework.demo.cae.command.InputDeckAddResultCommand;
 import org.sartframework.demo.cae.command.InputDeckCreateCommand;
 import org.sartframework.demo.cae.command.InputDeckUpdateFileCommand;
-import org.sartframework.driver.RemoteApi;
+import org.sartframework.driver.RestRemoteApi;
 import org.sartframework.driver.RequestMapping;
 import org.sartframework.driver.RequestMethod;
 
-public class RemoteSimulationApi extends RemoteApi {
+public class RestSimulationApi extends RestRemoteApi {
 
-    public RemoteSimulationApi() {
+    public RestSimulationApi() {
         super();
         registerCommandSupport(BatchInputDeckCreateCommand.class, new RequestMapping(RequestMethod.POST, "/inputDeck/batch/create"));
         registerCommandSupport(InputDeckCreateCommand.class, new RequestMapping(RequestMethod.POST, "/inputDeck/create"));

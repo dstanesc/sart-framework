@@ -45,7 +45,7 @@ public class DomainCommandService implements ManagedService<DomainCommandService
 
         StoreBuilder<KeyValueStore<String, AnnotatedDomainAggregate>> aggregateStoreBuilder = Stores
             .<String, AnnotatedDomainAggregate> keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getAggregate().getStore().getName()), Serdes.String(), SartSerdes.DomainAggregateSerde());
+                Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getAggregateStoreName()), Serdes.String(), SartSerdes.DomainAggregateSerde());
 
         commandHandlingTopology
             .addSource("domain-command-source", SartSerdes.String().deserializer(), SartSerdes.DomainCommandSerde().deserializer(),

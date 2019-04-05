@@ -36,7 +36,7 @@ public class TransactionCommandProcessor implements Processor<Long, TransactionC
         this.context = context;
 
         this.aggregateStore = (KeyValueStore<Long, KafkaTransactionAggregate>) context
-            .getStateStore(kafkaStreamsConfiguration.getTransaction().getStore().getName());
+            .getStateStore(kafkaStreamsConfiguration.getTransactionStoreName());
     }
 
     @Override

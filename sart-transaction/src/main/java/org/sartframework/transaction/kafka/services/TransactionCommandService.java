@@ -44,7 +44,7 @@ public class TransactionCommandService implements ManagedService<TransactionComm
         final Topology commandHandlingTopology = new Topology();
 
         StoreBuilder<KeyValueStore<Long, KafkaTransactionAggregate>> aggregateStoreBuilder = Stores.<Long, KafkaTransactionAggregate> keyValueStoreBuilder(
-            Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getTransaction().getStore().getName()), Serdes.Long(), SartSerdes.TransactionAggregateSerde());
+            Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getTransactionStoreName()), Serdes.Long(), SartSerdes.TransactionAggregateSerde());
 
         commandHandlingTopology
             .addSource("transaction-command-source", SartSerdes.Long().deserializer(), SartSerdes.TransactionCommandSerde().deserializer(),

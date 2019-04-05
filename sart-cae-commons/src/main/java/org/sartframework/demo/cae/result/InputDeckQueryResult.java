@@ -5,6 +5,8 @@ import org.sartframework.result.QueryResult;
 
 @Evolvable(identity="cae.result.InputDeckQueryResult", version = 1)
 public class InputDeckQueryResult implements QueryResult {
+    
+    String sid;
 
     String queryKey;
 
@@ -26,8 +28,9 @@ public class InputDeckQueryResult implements QueryResult {
         super();
     }
 
-    public InputDeckQueryResult(String queryKey, long xid, String inputDeckId, long inputDeckVersion, long entityCreationTime, String inputDeckName, String inputDeckFile) {
-
+    public InputDeckQueryResult(String sid, String queryKey, long xid, String inputDeckId, long inputDeckVersion, long entityCreationTime, String inputDeckName, String inputDeckFile) {
+        
+        this.sid = sid;
         this.queryKey = queryKey;
         this.xid = xid;
         this.inputDeckId = inputDeckId;
@@ -36,6 +39,16 @@ public class InputDeckQueryResult implements QueryResult {
         this.resultCreationTime = System.currentTimeMillis();
         this.inputDeckName = inputDeckName;
         this.inputDeckFile = inputDeckFile;
+    }
+
+
+    @Override
+    public String getSid() {
+        return sid;
+    }
+
+    public void setSid(String sid) {
+        this.sid = sid;
     }
 
     @Override

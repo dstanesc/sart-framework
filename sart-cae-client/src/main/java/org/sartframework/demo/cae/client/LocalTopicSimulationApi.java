@@ -5,11 +5,11 @@ import org.sartframework.demo.cae.command.ForceValidationFailureCommand;
 import org.sartframework.demo.cae.command.InputDeckAddResultCommand;
 import org.sartframework.demo.cae.command.InputDeckCreateCommand;
 import org.sartframework.demo.cae.command.InputDeckUpdateFileCommand;
-import org.sartframework.driver.CommandLocalApi;
+import org.sartframework.driver.LocalTopicCommandApi;
 
-public class LocalSimulationApi extends CommandLocalApi {
+public class LocalTopicSimulationApi extends LocalTopicCommandApi {
 
-    public LocalSimulationApi() {
+    public LocalTopicSimulationApi() {
         super();
         registerCommandSupport(BatchInputDeckCreateCommand.class);
         registerCommandSupport(InputDeckCreateCommand.class);

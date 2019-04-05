@@ -41,16 +41,16 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
 
     final static Logger LOGGER = LoggerFactory.getLogger(TransactionSessionMonitorService.class);
 
-    final SartKafkaConfiguration kafkaStreamsConfiguration;
+    final SartKafkaConfiguration sartKafkaConfiguration;
 
     final KafkaBusinessTransactionManager businessTransactionManager;
 
     KafkaStreams kafkaStreams;
 
     @Autowired
-    public TransactionSessionMonitorService(SartKafkaConfiguration kafkaStreamsConfiguration,
+    public TransactionSessionMonitorService(SartKafkaConfiguration sartKafkaConfiguration,
                                             KafkaBusinessTransactionManager businessTransactionManager) {
-        this.kafkaStreamsConfiguration = kafkaStreamsConfiguration;
+        this.sartKafkaConfiguration = sartKafkaConfiguration;
         this.businessTransactionManager = businessTransactionManager;
     }
 
@@ -61,7 +61,7 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<Long, TransactionEvent> transactionEventStream = builder.stream(kafkaStreamsConfiguration.getTransactionEventTopic(),
+        KStream<Long, TransactionEvent> transactionEventStream = builder.stream(sartKafkaConfiguration.getTransactionEventTopic(),
             Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.TransactionEventSerde()));
         
         transactionEventStream
@@ -87,7 +87,7 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
                     
                     running.remove(event.getXid());
                     
-                    running.setHighestCommited(event.getXid());
+                    running.setHighestCommitted(event.getXid());
 
                 } else if (event instanceof TransactionAbortedEvent) {
 
@@ -100,7 +100,7 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
 
                 return running;
 
-            }, Materialized.<String, RunningTransactions, KeyValueStore<Bytes, byte[]>> as(RUNNING_TRANSACTIONS_STORE)
+            }, Materialized.<String, RunningTransactions, KeyValueStore<Bytes, byte[]>> as(sartKafkaConfiguration.getSystemPrefixedName(RUNNING_TRANSACTIONS_STORE))
                 .withKeySerde(Serdes.String())
                 .withValueSerde(SartSerdes.RunningTransactionsSerde()))
                // .withCachingEnabled())
@@ -132,12 +132,12 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
                 return KeyValue.<Long, TransactionCompletedEvent> pair(xid, new TransactionCompletedEvent(xid, status));
             })
             
-            .to(kafkaStreamsConfiguration.getTransactionEventTopic(), Produced.<Long, TransactionCompletedEvent>with(Serdes.Long(), SartSerdes.TransactionEventSerde()));
+            .to(sartKafkaConfiguration.getTransactionEventTopic(), Produced.<Long, TransactionCompletedEvent>with(Serdes.Long(), SartSerdes.TransactionEventSerde()));
 
         Topology monitorTopology = builder.build();
 
         kafkaStreams = new KafkaStreams(monitorTopology,
-            new StreamsConfig(kafkaStreamsConfiguration.getKafkaStreamsProcessorConfig("transaction-session-monitor")));
+            new StreamsConfig(sartKafkaConfiguration.getKafkaStreamsProcessorConfig("transaction-session-monitor")));
 
         kafkaStreams.start();
 
@@ -160,16 +160,17 @@ public class TransactionSessionMonitorService implements ManagedService<Transact
 
         SystemSnapshot transactionSnapshot = new SystemSnapshot();
         
+        transactionSnapshot.setSid(sartKafkaConfiguration.getSid());
         transactionSnapshot.setTimestamp(System.currentTimeMillis());
 
-        ReadOnlyKeyValueStore<String, RunningTransactions> runningTransactionsStore = getKafkaStreams().store(RUNNING_TRANSACTIONS_STORE,
+        ReadOnlyKeyValueStore<String, RunningTransactions> runningTransactionsStore = getKafkaStreams().store(sartKafkaConfiguration.getSystemPrefixedName(RUNNING_TRANSACTIONS_STORE),
             QueryableStoreTypes.<String, RunningTransactions> keyValueStore());
         
         runningTransactionsStore.all().forEachRemaining(keyValue -> {
             
             SortedSet<Long> runningTransactions = keyValue.value.getTxn();
             
-            Long highestCommited = keyValue.value.getHighestCommited();
+            Long highestCommited = keyValue.value.getHighestCommitted();
             
             LOGGER.info("systemSnapshot highestCommited={}", highestCommited);
             

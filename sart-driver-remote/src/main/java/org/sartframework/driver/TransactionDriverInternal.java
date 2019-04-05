@@ -1,6 +1,5 @@
 package org.sartframework.driver;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 
 import org.sartframework.command.DomainCommand;
@@ -12,20 +11,21 @@ import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
+import org.sartframework.session.SystemTransaction;
 
-public interface TransactionDriverInternal {
+public interface TransactionDriverInternal extends TransactionDriver {
 
-    long nextTransactionInternal() throws IOException;
+    SystemTransaction nextTransactionInternal();
 
-    void startTransactionInternal(long xid, int isolation) throws IOException;
+    void startTransactionInternal(long xid, int isolation);
 
-    void commitTransactionInternal(long xid, long xct) throws IOException;
+    void commitTransactionInternal(long xid, long xct);
 
-    void abortTransactionInternal(long xid) throws IOException;
+    void abortTransactionInternal(long xid);
     
-    int statusTransactionInternal(long xid) throws IOException;
+    int statusTransactionInternal(long xid);
     
-    SystemSnapshot snapshotTransactionInternal(long xid) throws IOException;
+    SystemSnapshot snapshotTransactionInternal(long xid);
 
     void onStart(Consumer<TransactionStartedEvent> startConsumer, Long xid);
 
@@ -41,11 +41,8 @@ public interface TransactionDriverInternal {
 
     <T extends DomainEvent<? extends DomainCommand>> void onCompensate(Consumer<T> compensateConsumer, Class<T> eventType, long xid);
     
+    <C extends DomainCommand> void sendCommand(C domainCommand);
+    
     <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery, Class<R> resultType, Consumer<R> resultConsumer, Consumer<? super Throwable> errorConsumer, Runnable onComplete);
     
-    <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery, Class<R> resultType, Consumer<R> resultConsumer, Runnable onComplete);
-    
-    <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery, Class<R> resultType, Consumer<R> resultConsumer);
-    
-    <C extends DomainCommand> void sendCommand(C domainCommand);
 }

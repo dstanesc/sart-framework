@@ -1,20 +1,19 @@
 package org.sartframework.driver;
 
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.entity.ContentType;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionStatus.Isolation;
-import org.sartframework.driver.RemoteApi;
-import org.sartframework.driver.RequestMapping;
-import org.sartframework.driver.RequestMethod;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
@@ -23,6 +22,7 @@ import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
+import org.sartframework.session.SystemTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -37,139 +37,227 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class RemoteTransactionDriver implements TransactionDriverInternal, TransactionDriver, RemoteDriver  {
+public class DefaultRestTransactionDriver implements TransactionDriverInternal, RestTransactionDriver  {
 
-    final static Logger LOGGER = LoggerFactory.getLogger(RemoteTransactionDriver.class);
+    final static Logger LOGGER = LoggerFactory.getLogger(DefaultRestTransactionDriver.class);
 
-    RemoteApi transactionApi;
+    RestTransactionApi transactionApi;
 
-    Set<RemoteApi> projectionApis = new HashSet<>();
+    Set<RestQueryApi> queryApis = new LinkedHashSet<>();
 
-    Set<RemoteApi> commandApis = new HashSet<>();
-
+    Set<RestCommandApi> commandApis = new LinkedHashSet<>();
+    
     WebClient transactionClient;
 
-    public RemoteTransactionDriver() {
+    
+    public DefaultRestTransactionDriver() {
     }
 
+    
     @Override
-    public TransactionDriver init() {
+    public String getSid() {
+        // FIXME dstanesc -- Auto-generated method stub
+        return null;
+    }
+
+
+    @Override
+    public RestTransactionDriver init() {
         this.transactionClient = WebClient.create(transactionApi.toUrl());
         return this;
     }
-
-    public RemoteDriver registerTransactionApi(RemoteApi transactionListener) {
-        this.transactionApi = transactionListener;
+    
+    public RestTransactionDriver registerTransactionApi(RestTransactionApi transactionApi) {
+        this.transactionApi = transactionApi;
         return this;
     }
 
     @Override
-    public RemoteDriver registerProjectionApi(RemoteApi projectionListener) {
-        projectionApis.add(projectionListener);
+    public RestTransactionDriver registerQueryApi(RestQueryApi projectionListener) {
+        queryApis.add(projectionListener);
         return this;
     }
 
     @Override
-    public TransactionDriver registerCommandApi(RemoteApi api) {
+    public RestTransactionDriver registerCommandApi(RestCommandApi api) {
         commandApis.add(api);
         return this;
+    }
+    
+
+    public Set<RestQueryApi> getQueryApis() {
+        return queryApis;
+    }
+
+    public Set<RestCommandApi> getCommandApis() {
+        return commandApis;
     }
 
     @Override
     public DomainTransaction createDomainTransaction() {
 
-        return new DefaultDomainTransaction(this, this).next();
+        return createDomainTransaction(Isolation.READ_SNAPSHOT);
     }
 
     @Override
     public DomainTransaction createDomainTransaction(Isolation isolation) {
 
-        return new DefaultDomainTransaction(this, this).setIsolation(isolation).next();
+        return new DefaultDomainTransaction(this).setIsolation(isolation).next();
+    }
+
+
+    @Override
+    public SystemTransaction nextTransactionInternal() {
+
+        try {
+            
+            String apiUrl = "/transaction/get";
+
+            Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+
+            String jsonTransaction = performRequest(request);
+
+            LOGGER.info("Acquired unique sid, xid {}", jsonTransaction);
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            SystemTransaction systemTransaction = mapper.readValue(jsonTransaction, SystemTransaction.class);
+            
+            return systemTransaction;
+            
+        } catch (JsonParseException e) {
+            
+           throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public long nextTransactionInternal() throws IOException {
+    public void startTransactionInternal(long xid, int isolation) {
 
-        String apiUrl = "/transaction/get";
+        try {
+            LOGGER.info("Start transaction {}", xid);
 
-        Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+            String apiUrl = "/transaction/" + xid + "/" + isolation + "/start";
 
-        long xid = Long.parseLong(performRequest(request));
+            Request request = Request.Post(transactionApi.toUrl() + apiUrl);
 
-        LOGGER.info("Acquired unique xid {}", xid);
-
-        return xid;
-    }
-
-    @Override
-    public void startTransactionInternal(long xid, int isolation) throws IOException {
-
-        LOGGER.info("Start transaction {}", xid);
-
-        String apiUrl = "/transaction/" + xid + "/" + isolation + "/start";
-
-        Request request = Request.Post(transactionApi.toUrl() + apiUrl);
-
-        performMappedRequest(request);
+            performMappedRequest(request);
+            
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
     @Override
-    public void commitTransactionInternal(long xid, long xct) throws IOException {
+    public void commitTransactionInternal(long xid, long xct) {
 
-        LOGGER.info("Commit transaction xid={}, xct={}", xid, xct);
+        try {
+            LOGGER.info("Commit transaction xid={}, xct={}", xid, xct);
 
-        String apiUrl = "/transaction/" + xid + "/" + xct + "/commit";
+            String apiUrl = "/transaction/" + xid + "/" + xct + "/commit";
 
-        Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
+            Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
 
-        performMappedRequest(request);
-
-    }
-
-    @Override
-    public void abortTransactionInternal(long xid) throws IOException {
-
-        LOGGER.info("Rollback transaction {}", xid);
-
-        String apiUrl = "/transaction/" + xid + "/abort";
-
-        Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
-
-        performMappedRequest(request);
+            performMappedRequest(request);
+            
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
     @Override
-    public int statusTransactionInternal(long xid) throws IOException {
+    public void abortTransactionInternal(long xid) {
 
-        String apiUrl = "/transaction/" + xid + "/status";
+        try {
+            LOGGER.info("Rollback transaction {}", xid);
 
-        Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+            String apiUrl = "/transaction/" + xid + "/abort";
 
-        int status = Integer.parseInt(performRequest(request));
+            Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
 
-        LOGGER.info("Retrieved transaction status {} -> {}", xid, status);
+            performMappedRequest(request);
+            
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        return status;
     }
 
     @Override
-    public SystemSnapshot snapshotTransactionInternal(long xid) throws IOException {
+    public int statusTransactionInternal(long xid)  {
 
-        String apiUrl = "/transaction/" + xid + "/snapshot";
+        try {
+            String apiUrl = "/transaction/" + xid + "/status";
 
-        Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+            Request request = Request.Get(transactionApi.toUrl() + apiUrl);
 
-        String jsonSnapshot = performRequest(request);
+            int status = Integer.parseInt(performRequest(request));
 
-        LOGGER.info("Retrieved transaction snapshot {} -> {}", xid, jsonSnapshot);
+            LOGGER.info("Retrieved transaction status {} -> {}", xid, status);
 
-        ObjectMapper mapper = new ObjectMapper();
+            return status;
+            
+        } catch (NumberFormatException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        SystemSnapshot snapshot = mapper.readValue(jsonSnapshot, SystemSnapshot.class);
+    @Override
+    public SystemSnapshot snapshotTransactionInternal(long xid) {
 
-        return snapshot;
+        try {
+            String apiUrl = "/transaction/" + xid + "/snapshot";
+
+            Request request = Request.Get(transactionApi.toUrl() + apiUrl);
+
+            String jsonSnapshot = performRequest(request);
+
+            LOGGER.info("Retrieved transaction snapshot {} -> {}", xid, jsonSnapshot);
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            SystemSnapshot snapshot = mapper.readValue(jsonSnapshot, SystemSnapshot.class);
+
+            return snapshot;
+        } catch (JsonParseException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -268,26 +356,38 @@ public class RemoteTransactionDriver implements TransactionDriverInternal, Trans
 
         Class<? extends DomainQuery> queryType = domainQuery.getClass();
 
+        List<RestQueryApi> apis = queryApis.stream().filter(api -> api.hasQuerySupport(queryType)).collect(Collectors.toList());
+        
+        if (!apis.isEmpty()) {
+            
+            for (RestQueryApi api : apis) {
+                
+                onQuery(xid, isolation, systemSnapshot, subscribe, domainQuery, resultType, resultConsumer, errorConsumer, onComplete, api);
+            }
+            
+        } else
+            throw new UnsupportedOperationException("Unsupported query " + domainQuery);
+    }
+
+    
+    @Override
+    public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,
+                                                   Class<R> resultType, Consumer<R> resultConsumer, Consumer<? super Throwable> errorConsumer,
+                                                   Runnable onComplete, RestQueryApi restApi) {
+
+        Class<? extends DomainQuery> queryType = domainQuery.getClass();
+
         domainQuery.setQueryKey(UUID.randomUUID().toString());
         domainQuery.setQueryXid(xid);
         domainQuery.setSystemSnapshot(systemSnapshot);
         domainQuery.setQuerySubscription(subscribe);
         domainQuery.setIsolation(isolation);
 
-        Optional<RemoteApi> apiOptional = projectionApis.stream().filter(api -> api.hasQuerySupport(queryType)).findFirst();
+        if (restApi.hasQuerySupport(queryType)) {
 
-        if (apiOptional.isPresent()) {
+            RequestMapping requestMapping = restApi.getQuerySupportApiUrl(domainQuery.getClass());
 
-            RemoteApi remoteApi = apiOptional.get();
-
-            RequestMapping requestMapping = remoteApi.getQuerySupportApiUrl(domainQuery.getClass());
-
-            WebClient projectionClient = WebClient.create(remoteApi.toUrl());
-
-            // Flux<R> resultFlux =
-            // projectionClient.get().uri(requestMapping.getUrl(),
-            // domainQuery.getVariables().getContent())
-            // .accept(MediaType.APPLICATION_STREAM_JSON).retrieve().bodyToFlux(resultType);
+            WebClient projectionClient = WebClient.create(restApi.toUrl());
 
             RequestMethod requestMethod = requestMapping.getMethod();
 
@@ -311,64 +411,44 @@ public class RemoteTransactionDriver implements TransactionDriverInternal, Trans
                 .body(BodyInserters.fromObject(domainQuery)).retrieve().bodyToFlux(resultType);
 
             resultFlux.subscribe(resultConsumer, errorConsumer, onComplete);
-            
-           
 
         } else
             throw new UnsupportedOperationException("Unsupported query " + domainQuery);
     }
-
-    // https://www.baeldung.com/spring-5-webclient
-
+    
+    
     @Override
     public <C extends DomainCommand> void sendCommand(C domainCommand) {
 
         Class<? extends DomainCommand> commandType = domainCommand.getClass();
 
-        Optional<RemoteApi> apiOptional = commandApis.stream().filter(api -> api.hasCommandSupport(commandType)).findFirst();
+        Optional<RestCommandApi> apiOptional = commandApis.stream().filter(api -> api.hasCommandSupport(commandType)).findFirst();
 
         if (apiOptional.isPresent()) {
 
-            RemoteApi remoteApi = apiOptional.get();
+            RestCommandApi remoteApi = apiOptional.get();
 
             RequestMapping requestMapping = remoteApi.getCommandSupportApiUrl(domainCommand.getClass());
-
-            // WebClient commandClient = WebClient.create(webApi.toUrl());
 
             RequestMethod requestMethod = requestMapping.getMethod();
 
             String url = remoteApi.toUrl() + requestMapping.getUrl();
 
-            // final RequestBodyUriSpec request;
-
             final Request request;
 
             switch (requestMethod) {
                 case POST:
-                    // request = commandClient.post();
                     request = Request.Post(url);
                     break;
                 case PATCH:
-                    // request = commandClient.patch();
                     request = Request.Patch(url);
                     break;
                 case PUT:
-                    // request = commandClient.put();
                     request = Request.Put(url);
                     break;
                 default:
                     throw new UnsupportedOperationException("Method not handled " + requestMethod);
             }
-
-            // request.uri(requestMapping.getUrl()).accept(MediaType.APPLICATION_JSON_UTF8)
-            // .body(BodyInserters.fromObject(domainCommand)).exchange().subscribe();
-
-            // FIXME use blocking apache client or elaborate a non blocking
-            // pattern for a sequence of commands
-
-            // HttpStatus status =
-            // request.uri(requestMapping.getUrl()).accept(MediaType.APPLICATION_JSON_UTF8)
-            // .body(BodyInserters.fromObject(domainCommand)).exchange().block().statusCode();
 
             ObjectMapper objectMapper = new ObjectMapper();
 
@@ -384,24 +464,9 @@ public class RemoteTransactionDriver implements TransactionDriverInternal, Trans
 
                 throw new RuntimeException(e);
             }
-            //
-            // if (status.compareTo(HttpStatus.OK) != 0)
-            // throw new RuntimeException("Wrong status");
 
         } else
             throw new UnsupportedOperationException("Unsupported command " + domainCommand);
-    }
-
-    @Override
-    public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,
-                                                   Class<R> resultType, Consumer<R> resultConsumer, Runnable onComplete) {
-        onQuery(xid, isolation, systemSnapshot, subscribe, domainQuery, resultType, resultConsumer, null, onComplete);
-    }
-
-    @Override
-    public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,
-                                                   Class<R> resultType, Consumer<R> resultConsumer) {
-        onQuery(xid, isolation, systemSnapshot, subscribe, domainQuery, resultType, resultConsumer, null);
     }
 
     private void performMappedRequest(Request request) throws ClientProtocolException, IOException, JsonParseException, JsonMappingException {

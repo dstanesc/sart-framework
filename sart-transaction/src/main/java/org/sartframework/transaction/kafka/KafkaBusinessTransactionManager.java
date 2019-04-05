@@ -23,6 +23,7 @@ import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.kafka.channels.KafkaWriters;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.session.SystemSnapshot;
+import org.sartframework.session.SystemTransaction;
 import org.sartframework.transaction.BusinessTransactionManager;
 import org.sartframework.transaction.generator.TransactionSequence;
 import org.sartframework.transaction.generator.ZookeeperTransactionSequence;
@@ -81,9 +82,11 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
     }
 
     @Override
-    public long nextTransaction() {
+    public SystemTransaction nextTransaction() {
 
         long xid = transactionSequence.next();
+        
+        String sid = kafkaStreamsConfiguration.getSid();
         
         //should we better have an explicit dependency on creating monitors before start instead of time sequence
         completeListener(xid).subscribe( c -> {
@@ -93,14 +96,14 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
         
         createTransaction(xid);
 
-        return xid;
+        return new SystemTransaction(sid, xid);
     }
 
     @Override
     public int status(long xid) {
 
         ReadOnlyKeyValueStore<Long, KafkaTransactionAggregate> transactionStore = transactionCommandService.getKafkaStreams().store(
-            kafkaStreamsConfiguration.getTransaction().getStore().getName(), QueryableStoreTypes.<Long, KafkaTransactionAggregate> keyValueStore());
+            kafkaStreamsConfiguration.getTransactionStoreName(), QueryableStoreTypes.<Long, KafkaTransactionAggregate> keyValueStore());
 
         return transactionStore.get(xid).getStatus();
     }
@@ -110,7 +113,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
     public SystemSnapshot systemSnapshot(long xid) {
 
         ReadOnlyKeyValueStore<Long, KafkaTransactionAggregate> transactionStore = transactionCommandService.getKafkaStreams().store(
-            kafkaStreamsConfiguration.getTransaction().getStore().getName(), QueryableStoreTypes.<Long, KafkaTransactionAggregate> keyValueStore());
+            kafkaStreamsConfiguration.getTransactionStoreName(), QueryableStoreTypes.<Long, KafkaTransactionAggregate> keyValueStore());
 
         KafkaTransactionAggregate transactionAggregate = transactionStore.get(xid);
         
@@ -120,7 +123,7 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
     public PartitionOffset partitionOffset(long xid) {
         
         ReadOnlyKeyValueStore<Long, KafkaTransactionAggregate> transactionStore = transactionCommandService.getKafkaStreams().store(
-            kafkaStreamsConfiguration.getTransaction().getStore().getName(), QueryableStoreTypes.<Long, KafkaTransactionAggregate> keyValueStore());
+            kafkaStreamsConfiguration.getTransactionStoreName(), QueryableStoreTypes.<Long, KafkaTransactionAggregate> keyValueStore());
 
         KafkaTransactionAggregate transactionAggregate = transactionStore.get(xid);
 
