@@ -14,8 +14,10 @@ import org.sartframework.command.transaction.CreateTransactionCommand;
 import org.sartframework.command.transaction.StartTransactionCommand;
 import org.sartframework.command.transaction.TransactionCommand;
 import org.sartframework.event.DomainEvent;
+import org.sartframework.event.EventDescriptor;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
@@ -240,10 +242,6 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
 
         writeChannels.getTransactionEventWriter().sendDefault(transactionEvent.getXid(), transactionEvent);
     }
-    
-//    public TransactionMonitors createTransactionMonitors(long xid) {   
-//        return  transactionLifecycleMonitorService.getSubscribedMonitors(xid);
-//    }
 
     @Override
     public Flux<DomainEvent<? extends DomainCommand>> transactionProgressEvents(long xid) {
@@ -276,12 +274,22 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
     }
 
     @Override
+    public Flux<TransactionDetailsAttachedEvent> detailsAttachedListener(long xid) {
+        return transactionLifecycleMonitorService.getSubscribedMonitors(xid).detailsAttachedMonitor();
+    }
+
+    @Override
     public Flux<ConflictResolvedEvent> conflictListener(long xid) {
         return transactionLifecycleMonitorService.getSubscribedMonitors(xid).conflictResolvedMonitor();
     }
 
     public SartKafkaConfiguration getKafkaStreamsConfiguration() {
         return kafkaStreamsConfiguration;
+    }
+
+    @Override
+    public Flux<EventDescriptor> eventDescriptor() {
+        return transactionLifecycleMonitorService.getEventDescriptorFlux();
     }
 
 }

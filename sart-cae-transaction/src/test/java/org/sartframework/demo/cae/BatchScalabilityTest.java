@@ -72,6 +72,7 @@ public class BatchScalabilityTest {
             .registerTransactionApi(new RestTransactionApi())
             .registerQueryApi(new RestInputDeckQueryApi())
             .registerCommandApi(new RestSimulationApi())
+            .attachTraces()
             .init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();

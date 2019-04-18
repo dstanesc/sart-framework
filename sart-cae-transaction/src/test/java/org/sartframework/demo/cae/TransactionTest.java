@@ -44,7 +44,7 @@ public class TransactionTest extends AbstractCaeTest {
     public void testCommandSingle() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<TestStatus> completionLock = new CompletableFuture<>();
 
@@ -100,7 +100,7 @@ public class TransactionTest extends AbstractCaeTest {
     public void testCommandMultiple() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         DomainTransaction domainTransaction = driver.createDomainTransaction();
 
@@ -151,7 +151,7 @@ public class TransactionTest extends AbstractCaeTest {
         String j = nextInputDeckIdentity();
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         DomainTransaction x1 = driver.createDomainTransaction();
 
@@ -202,7 +202,7 @@ public class TransactionTest extends AbstractCaeTest {
         CompletableFuture<ConflictResolvedEvent> conflictResolvedLock = new CompletableFuture<>();
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         DomainTransaction x1 = driver.createDomainTransaction();
 
@@ -265,7 +265,9 @@ public class TransactionTest extends AbstractCaeTest {
         TransactionDriver driver = new DefaultRestTransactionDriver()
             .registerTransactionApi(new RestTransactionApi())
             .registerQueryApi(new RestInputDeckQueryApi())
-            .registerCommandApi(new RestSimulationApi()).init();
+            .registerCommandApi(new RestSimulationApi())
+            .attachTraces()
+            .init();
 
         DomainTransaction x1 = driver.createDomainTransaction();
 
@@ -328,7 +330,9 @@ public class TransactionTest extends AbstractCaeTest {
         TransactionDriver driver = new DefaultRestTransactionDriver()
             .registerTransactionApi(new RestTransactionApi())
             .registerQueryApi(new RestInputDeckQueryApi())
-            .registerCommandApi(new RestSimulationApi()).init();
+            .registerCommandApi(new RestSimulationApi())
+            .attachTraces()
+            .init();
 
         DomainTransaction x1 = driver.createDomainTransaction();
 
@@ -400,7 +404,7 @@ public class TransactionTest extends AbstractCaeTest {
         CompletableFuture<Boolean> queryCompletionLock = new CompletableFuture<>();
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         DomainTransaction x1 = driver.createDomainTransaction();
 
@@ -475,7 +479,7 @@ public class TransactionTest extends AbstractCaeTest {
         CompletableFuture<InputDeckFileUpdatedEvent> fileCompensateLock = new CompletableFuture<>();
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         DomainTransaction x1 = driver.createDomainTransaction();
 
@@ -536,7 +540,7 @@ public class TransactionTest extends AbstractCaeTest {
         CompletableFuture<ConflictResolvedResult> conflictQueryLock = new CompletableFuture<>();
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         DomainTransaction x1 = driver.createDomainTransaction();
 
@@ -605,7 +609,7 @@ public class TransactionTest extends AbstractCaeTest {
     public void testQueryInputDeckProjectionSyntax1() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<SystemSnapshot> startLock = new CompletableFuture<>();
 
@@ -642,7 +646,7 @@ public class TransactionTest extends AbstractCaeTest {
     public void testQueryInputDeckProjectionSyntax2() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
         CompletableFuture<TransactionCompletedEvent> completeLock = new CompletableFuture<>();
@@ -682,7 +686,7 @@ public class TransactionTest extends AbstractCaeTest {
     public void testQueryInputDeckProjectionSyntax3() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 
@@ -716,7 +720,7 @@ public class TransactionTest extends AbstractCaeTest {
     public void testQueryInputDeckProjectionSyntax4() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 
@@ -746,7 +750,7 @@ public class TransactionTest extends AbstractCaeTest {
     public void testQueryInputDeckProjectionSyntax5() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 
@@ -777,7 +781,7 @@ public class TransactionTest extends AbstractCaeTest {
     public void testInputDeckPerformanceMonitor() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

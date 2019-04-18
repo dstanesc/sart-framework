@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
@@ -12,6 +13,7 @@ import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.session.SystemTransaction;
+import org.sartframework.transaction.TransactionDetails;
 
 public interface TransactionDriverInternal extends TransactionDriver {
 
@@ -25,6 +27,8 @@ public interface TransactionDriverInternal extends TransactionDriver {
     
     int statusTransactionInternal(long xid);
     
+    void attachTransactionDetails(long xid, TransactionDetails transactionDetails);
+    
     SystemSnapshot snapshotTransactionInternal(long xid);
 
     void onStart(Consumer<TransactionStartedEvent> startConsumer, Long xid);
@@ -35,7 +39,9 @@ public interface TransactionDriverInternal extends TransactionDriver {
     
     void onComplete(Consumer<TransactionCompletedEvent> completeConsumer, long xid);
     
-    void onConflict(Consumer<ConflictResolvedEvent> conflictConsumer, Long xid);
+    void onDetailsAttached(Consumer<TransactionDetailsAttachedEvent> detailsConsumer, long xid);
+    
+    void onConflict(Consumer<ConflictResolvedEvent> conflictConsumer, long xid);
     
     <T extends DomainEvent<? extends DomainCommand>> void onProgress(Consumer<T> progressConsumer, Class<T> eventType,  long xid);
 

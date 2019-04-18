@@ -110,7 +110,7 @@ public class PlatformOperationRegistry {
     
     public final PlatformOperationRegistry registerOperationCategory(Class<?> category, String basePackage) {
 
-        LOGGER.info("Scanning category {} in pkg {} ", category, basePackage);
+        LOGGER.debug("Scanning category {} in pkg {} ", category, basePackage);
 
         scanAndRegisterCategory(category, basePackage);
 
@@ -133,7 +133,7 @@ public class PlatformOperationRegistry {
 
         if (latestAvailable) {
             
-            LOGGER.info("ContentSerializer chosen for latest available structure {}", versionedStructure);
+            LOGGER.debug("ContentSerializer chosen for latest available structure {}", versionedStructure);
         }
         
         return versionedStructure.getContentSerializer();
@@ -147,7 +147,7 @@ public class PlatformOperationRegistry {
     public final <T> void registerEvolvableStructure(Class<T> serializableStructure, String structureIdentity, int structureVersion,
                                                      ContentSerializer<T> contentSerializer) {
 
-        LOGGER.info("Registering structure {}, id={}, ver={}, ser={}", serializableStructure, structureIdentity, structureVersion,
+        LOGGER.debug("Registering structure {}, id={}, ver={}, ser={}", serializableStructure, structureIdentity, structureVersion,
             contentSerializer.getClass());
 
         EvolvableStructure<T> versionedStructure = new EvolvableStructure<T>(structureIdentity, structureVersion, contentSerializer);

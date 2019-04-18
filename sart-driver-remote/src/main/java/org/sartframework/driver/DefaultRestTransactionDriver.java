@@ -13,9 +13,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.entity.ContentType;
 import org.sartframework.command.DomainCommand;
+import org.sartframework.command.transaction.AttachTransactionDetailsCommand;
 import org.sartframework.command.transaction.TransactionStatus.Isolation;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
@@ -23,6 +25,7 @@ import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.session.SystemTransaction;
+import org.sartframework.transaction.TransactionDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -41,17 +44,17 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
 
     final static Logger LOGGER = LoggerFactory.getLogger(DefaultRestTransactionDriver.class);
 
-    RestTransactionApi transactionApi;
+    private RestTransactionApi transactionApi;
 
-    Set<RestQueryApi> queryApis = new LinkedHashSet<>();
+    private Set<RestQueryApi> queryApis = new LinkedHashSet<>();
 
-    Set<RestCommandApi> commandApis = new LinkedHashSet<>();
+    private Set<RestCommandApi> commandApis = new LinkedHashSet<>();
     
-    WebClient transactionClient;
+    private WebClient transactionClient;
 
+    boolean enableTraces = false;
     
-    public DefaultRestTransactionDriver() {
-    }
+    public DefaultRestTransactionDriver() {}
 
     
     @Override
@@ -84,6 +87,11 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
         return this;
     }
     
+    @Override
+    public RestTransactionDriver attachTraces() {
+        this.enableTraces = true;
+        return this;
+    }
 
     public Set<RestQueryApi> getQueryApis() {
         return queryApis;
@@ -102,7 +110,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
     @Override
     public DomainTransaction createDomainTransaction(Isolation isolation) {
 
-        return new DefaultDomainTransaction(this).setIsolation(isolation).next();
+        return new DefaultDomainTransaction(this).setIsolation(isolation).setEnableTraces(enableTraces).next();
     }
 
 
@@ -232,6 +240,37 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
         }
     }
 
+    
+    
+    @Override
+    public void attachTransactionDetails(long xid, TransactionDetails transactionDetails) {
+      
+        LOGGER.info("Attach transaction details {}", xid);
+        
+        String apiUrl = "/transaction/" + xid + "/attachDetails";
+        
+        Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
+        
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        AttachTransactionDetailsCommand attachDetailsCommand = new AttachTransactionDetailsCommand(transactionDetails);
+        
+        try {
+
+            String payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(attachDetailsCommand);
+
+            String status = request.connectTimeout(100000).socketTimeout(100000).addHeader("Content-Type", "application/json")
+                .bodyString(payload, ContentType.APPLICATION_JSON).execute().returnContent().asString();
+
+            LOGGER.info("Attach transaction details command returned : " + status);
+            
+        } catch (IOException e) {
+
+            throw new RuntimeException(e);
+        }
+    }
+
+
     @Override
     public SystemSnapshot snapshotTransactionInternal(long xid) {
 
@@ -311,7 +350,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
     }
 
     @Override
-    public void onConflict(Consumer<ConflictResolvedEvent> conflictConsumer, Long xid) {
+    public void onConflict(Consumer<ConflictResolvedEvent> conflictConsumer, long xid) {
 
         LOGGER.info("Subscribe to conflict resolved event");
 
@@ -335,6 +374,21 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
 
         progressFlux.subscribe(progressConsumer);
     }
+
+    
+    @Override
+    public void onDetailsAttached(Consumer<TransactionDetailsAttachedEvent> detailsConsumer, long xid) {
+      
+        LOGGER.info("Subscribe to attached transaction details events of {}", xid);
+        
+        String apiUrl = "/transaction/{xid}/detailsAttachedListener";
+        
+        Flux<TransactionDetailsAttachedEvent> compensateFlux = transactionClient.get().uri(apiUrl, xid).accept(MediaType.APPLICATION_STREAM_JSON)
+            .retrieve().bodyToFlux(TransactionDetailsAttachedEvent.class);
+
+        compensateFlux.subscribe(detailsConsumer);
+    }
+
 
     @Override
     public <T extends DomainEvent<? extends DomainCommand>> void onCompensate(Consumer<T> compensateConsumer, Class<T> eventType, long xid) {

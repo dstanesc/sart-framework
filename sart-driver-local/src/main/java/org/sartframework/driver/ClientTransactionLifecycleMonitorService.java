@@ -85,17 +85,7 @@ public class ClientTransactionLifecycleMonitorService implements ManagedService<
         } else if (event instanceof ConflictResolvedEvent) {
             transactionMonitors.onNextConflict((ConflictResolvedEvent) event);
         } else if (event instanceof ProgressLoggedEvent) {
-
-            ProgressLoggedEvent progressEvent = (ProgressLoggedEvent) event;
-
-            long xcs = progressEvent.getXcs();
-
-            if (xcs < 0) {
-                transactionMonitors.onNextCompensate(progressEvent.getDomainEvent());
-            } else if (xcs > 0) {
-                transactionMonitors.onNextProgress(progressEvent.getDomainEvent());
-            } else
-                throw new UnsupportedOperationException(" Invalid xcs " + xcs);
+            transactionMonitors.onNextLogged((ProgressLoggedEvent) event);
         }
     }
 

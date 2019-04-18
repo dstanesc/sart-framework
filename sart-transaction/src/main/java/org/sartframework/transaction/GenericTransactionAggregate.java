@@ -1,11 +1,15 @@
 package org.sartframework.transaction;
 
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import javax.persistence.Id;
 
 import org.sartframework.aggregate.TransactionAggregate;
-import org.sartframework.command.DomainCommand;
 import org.sartframework.command.DefaultVoidDomainCommand;
+import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.AbortTransactionCommand;
+import org.sartframework.command.transaction.AttachTransactionDetailsCommand;
 import org.sartframework.command.transaction.CommitTransactionCommand;
 import org.sartframework.command.transaction.CompensateDomainEventCommand;
 import org.sartframework.command.transaction.CreateTransactionCommand;
@@ -21,6 +25,7 @@ import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommitRequestedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCreatedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.session.SystemSnapshot;
 import org.slf4j.Logger;
@@ -48,6 +53,8 @@ public abstract class GenericTransactionAggregate implements TransactionAggregat
     private int partition;
 
     private long offset;
+    
+    private TransactionDetails details;
 
     public GenericTransactionAggregate() {
         super();
@@ -86,6 +93,11 @@ public abstract class GenericTransactionAggregate implements TransactionAggregat
         dispatch(progressEvent);
     }
 
+    private void handleAttachDetailsCommand(AttachTransactionDetailsCommand attachDetailsCommand) {
+        TransactionDetailsAttachedEvent detailsAttachedEvent = new TransactionDetailsAttachedEvent(attachDetailsCommand.getXid(), attachDetailsCommand.getDetails());
+        dispatch(detailsAttachedEvent);
+    }
+    
     public void handleCompensateCommand(CompensateDomainEventCommand compensateDomainEventCommand) {
         
         DomainEventCompensatedEvent compensatedEvent = new DomainEventCompensatedEvent(compensateDomainEventCommand.getXid(),
@@ -112,9 +124,13 @@ public abstract class GenericTransactionAggregate implements TransactionAggregat
             handleCompensateCommand((CompensateDomainEventCommand) c);
         } else if (c instanceof LogProgressCommand) {
             handleProgressCommand((LogProgressCommand) c);
+        } else if (c instanceof AttachTransactionDetailsCommand) {
+            handleAttachDetailsCommand((AttachTransactionDetailsCommand) c);
         } else
             throw new UnsupportedOperationException();
     }
+
+    
 
     public void handleTransactionCreatedEvent(TransactionCreatedEvent e) {
 
@@ -210,6 +226,18 @@ public abstract class GenericTransactionAggregate implements TransactionAggregat
             }
         }
     }
+
+    public void handleTransactionDetailsAttachedEvent(TransactionDetailsAttachedEvent transactionEvent) {
+        
+        LOGGER.info("Transaction details attached event received {} -> {}", transactionEvent.getXid(), transactionEvent.getDetails());
+    
+        if(this.details == null) {
+            this.details = new TransactionDetails(transactionEvent.getXid());
+        }
+        
+        this.details.addDetails(transactionEvent.getDetails());
+    }
+
 
     public void handleDomainEventCompensatedEvent(DomainEventCompensatedEvent compensatedEvent) {
 

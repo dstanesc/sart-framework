@@ -5,6 +5,8 @@ import java.io.Closeable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
+import org.sartframework.event.transaction.ProgressLoggedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
@@ -26,13 +28,15 @@ public class TransactionMonitors implements Closeable {
     MonoProcessor<TransactionCommittedEvent> commitMonitor = MonoProcessor.<TransactionCommittedEvent> create();
 
     MonoProcessor<TransactionCompletedEvent> completeMonitor = MonoProcessor.<TransactionCompletedEvent> create();
+    
+    ReplayProcessor<TransactionDetailsAttachedEvent> detailsAttachedMonitor = ReplayProcessor.<TransactionDetailsAttachedEvent> create();
 
     ReplayProcessor<ConflictResolvedEvent> conflictResolvedMonitor = ReplayProcessor.<ConflictResolvedEvent> create();
 
     ReplayProcessor<DomainEvent<? extends DomainCommand>> compensateMonitor = ReplayProcessor.<DomainEvent<? extends DomainCommand>> create();
 
     ReplayProcessor<DomainEvent<? extends DomainCommand>> progressMonitor = ReplayProcessor.<DomainEvent<? extends DomainCommand>> create();
-
+    
     public TransactionMonitors() {
     }
 
@@ -52,20 +56,28 @@ public class TransactionMonitors implements Closeable {
         completeMonitor().onNext(e);
     }
 
+    public void onNextDetailsAttached(TransactionDetailsAttachedEvent e) {
+        detailsAttachedMonitor().onNext(e);
+    }
+    
     public void onNextConflict(ConflictResolvedEvent e) {
         conflictResolvedMonitor().onNext(e);
     }
 
-    public void onNextCompensate(DomainEvent<? extends DomainCommand> e) {
-        compensateMonitor().onNext(e);
+    public void onNextLogged(ProgressLoggedEvent e) {
+        
+        long xcs = e.getXcs();
+        
+        if (xcs < 0) {
+            compensateMonitor().onNext(e.getDomainEvent());
+        } else if (xcs > 0) {
+            progressMonitor().onNext(e.getDomainEvent());
+        } else
+            throw new UnsupportedOperationException(" Invalid xcs " + xcs);
     }
-
-    public void onNextProgress(DomainEvent<? extends DomainCommand> e) {
-        progressMonitor().onNext(e);
-    }
-
+    
+    
     public MonoProcessor<TransactionStartedEvent> startMonitor() {
-
         return startMonitor;
     }
 
@@ -79,6 +91,10 @@ public class TransactionMonitors implements Closeable {
 
     public MonoProcessor<TransactionCompletedEvent> completeMonitor() {
         return completeMonitor;
+    }
+    
+    public ReplayProcessor<TransactionDetailsAttachedEvent> detailsAttachedMonitor() {
+        return detailsAttachedMonitor;
     }
 
     public ReplayProcessor<ConflictResolvedEvent> conflictResolvedMonitor() {
@@ -100,6 +116,7 @@ public class TransactionMonitors implements Closeable {
         abortMonitor().dispose();
         commitMonitor().dispose();
         completeMonitor().dispose();
+        detailsAttachedMonitor().dispose();
         conflictResolvedMonitor().dispose();
         compensateMonitor().dispose();
         progressMonitor().dispose();

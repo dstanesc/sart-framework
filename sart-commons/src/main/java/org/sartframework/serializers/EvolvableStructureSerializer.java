@@ -28,7 +28,7 @@ public class EvolvableStructureSerializer<T> implements GenericSerializer<T> {
 
         int structureVersion = serializedStructure.getStructureVersion();
 
-        LOGGER.info("Deserializing identity={}, ver={}", structureIdentity, structureVersion);
+        LOGGER.debug("Deserializing identity={}, ver={}", structureIdentity, structureVersion);
         
         byte[] payload = serializedStructure.getPayload();
 
@@ -39,7 +39,7 @@ public class EvolvableStructureSerializer<T> implements GenericSerializer<T> {
         //check type safety w/ Spring's ParametrizedTypeReference
         Class<T> operationClass = (Class<T>) deserialized.getClass();
         
-        LOGGER.info("Deserialized class={} ", operationClass);
+        LOGGER.debug("Deserialized class={} ", operationClass);
         
         if(serializerRegistry.hasAdapter(operationClass)) {
             
@@ -69,7 +69,7 @@ public class EvolvableStructureSerializer<T> implements GenericSerializer<T> {
 
         int structureVersion = versionedStructure.getVersion();
         
-        LOGGER.info("Serializing identity={}, ver={}, class={}", structureIdentity, structureVersion, operationClass);
+        LOGGER.debug("Serializing identity={}, ver={}, class={}", structureIdentity, structureVersion, operationClass);
 
         ContentSerializer<T> contentSerializer = serializerRegistry.getContentSerializer(structureIdentity, structureVersion, false);
 

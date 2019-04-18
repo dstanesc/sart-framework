@@ -61,7 +61,7 @@ public class ScalabilityTest extends AbstractCaeTest {
     protected void createAndQuery(int count) throws InterruptedException, ExecutionException, TimeoutException {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

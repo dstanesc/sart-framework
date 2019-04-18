@@ -15,6 +15,8 @@ public interface RestTransactionDriver extends SiteTransactionDriver {
     RestTransactionDriver registerQueryApi(RestQueryApi api);
     
     RestTransactionDriver registerCommandApi(RestCommandApi api);
+    
+    RestTransactionDriver attachTraces();
 
     <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery, Class<R> resultType, Consumer<R> resultConsumer, Consumer<? super Throwable> errorConsumer, Runnable onComplete, RestQueryApi queryApi);
 

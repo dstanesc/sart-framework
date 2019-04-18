@@ -12,10 +12,12 @@ import java.util.function.Consumer;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
 import org.sartframework.command.DomainCommand;
+import org.sartframework.command.transaction.AttachTransactionDetailsCommand;
 import org.sartframework.command.transaction.TransactionStatus.Isolation;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.query.QueryUnsubscribedEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
@@ -26,6 +28,7 @@ import org.sartframework.projection.kafka.services.QueryResultListenerService;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.session.SystemTransaction;
+import org.sartframework.transaction.TransactionDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -241,6 +244,15 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
             throw new RuntimeException(e);
         }
     }
+    
+    
+    @Override
+    public void attachTransactionDetails(long xid, TransactionDetails transactionDetails) {
+        
+        AttachTransactionDetailsCommand attachDetailsCommand = new AttachTransactionDetailsCommand(transactionDetails);
+        
+        writeChannels.getTransactionCommandWriter().sendDefault(xid, attachDetailsCommand);
+    }
 
     @Override
     public SystemSnapshot snapshotTransactionInternal(long xid) {
@@ -329,7 +341,7 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
     }
 
     @Override
-    public void onConflict(Consumer<ConflictResolvedEvent> conflictConsumer, Long xid) {
+    public void onConflict(Consumer<ConflictResolvedEvent> conflictConsumer, long xid) {
 
         LOGGER.info("Subscribe to conflict resolved event");
 
@@ -354,6 +366,20 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
         Flux<T> progressFlux = (Flux<T>) progressMonitor.filter(e -> e.getClass().equals(eventType));
 
         progressFlux.subscribe(progressConsumer);
+    }
+
+    
+    
+    @Override
+    public void onDetailsAttached(Consumer<TransactionDetailsAttachedEvent> detailsConsumer, long xid) {
+        
+        LOGGER.info("Subscribe to attached transaction details for {}", xid);
+        
+        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
+        
+        ReplayProcessor<TransactionDetailsAttachedEvent> detailsAttachedFlux = monitorService.getTransactionMonitors().detailsAttachedMonitor();
+        
+        detailsAttachedFlux.subscribe(detailsConsumer);
     }
 
     @SuppressWarnings("unchecked")

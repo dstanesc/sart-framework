@@ -26,7 +26,7 @@ public class DurationTest extends AbstractCaeTest {
     public void testInputDeckPerformanceMonitor() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
 
         CompletableFuture<Long> startLock = new CompletableFuture<>();

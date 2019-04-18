@@ -29,6 +29,7 @@ public class VersionTest extends AbstractCaeTest {
             .registerTransactionApi(new RestTransactionApi())
             .registerQueryApi(new RestInputDeckQueryApi())
             .registerCommandApi(new RestSimulationApi())
+            .attachTraces()
             .init();
 
         String inputDeckId = nextInputDeckIdentity();

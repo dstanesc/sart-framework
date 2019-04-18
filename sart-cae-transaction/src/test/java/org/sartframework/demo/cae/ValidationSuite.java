@@ -15,7 +15,9 @@ import org.junit.runners.Suite;
     LatencyTest.class, 
     BatchScalabilityTest.class, 
     IsolationTest.class,
-    DurationTest.class
+    DurationTest.class,
+    WorkflowTest.class,
+    AttachDetailsTest.class
 })
 
 public class ValidationSuite {}

@@ -26,7 +26,7 @@ public class LatencyTest extends AbstractCaeTest {
     public void testInputDeckPerformanceMonitor() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

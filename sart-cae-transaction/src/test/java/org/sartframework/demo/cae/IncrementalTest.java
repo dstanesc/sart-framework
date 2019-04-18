@@ -100,7 +100,7 @@ public class IncrementalTest {
     public void testQueryInputDeckProjectionSyntax2() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
         CompletableFuture<TransactionCompletedEvent> completeLock = new CompletableFuture<>();
@@ -140,7 +140,7 @@ public class IncrementalTest {
     public void testInputDeckPerformanceMonitor() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

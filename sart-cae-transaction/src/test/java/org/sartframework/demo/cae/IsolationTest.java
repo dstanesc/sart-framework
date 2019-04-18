@@ -29,7 +29,7 @@ public class IsolationTest extends AbstractCaeTest {
     public void testReadSnapshotIsolationNotFound() {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         String j = nextInputDeckIdentity();
 
@@ -85,7 +85,7 @@ public class IsolationTest extends AbstractCaeTest {
     @Test
     public void testReadCommitedIsolationNotFound() {
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         String j = nextInputDeckIdentity();
 
@@ -141,7 +141,7 @@ public class IsolationTest extends AbstractCaeTest {
     @Test
     public void testReadUncommitedIsolationFound() {
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         String j = nextInputDeckIdentity();
 
@@ -197,7 +197,7 @@ public class IsolationTest extends AbstractCaeTest {
     public void testReadSnapshotIsolationFound() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 
@@ -227,7 +227,7 @@ public class IsolationTest extends AbstractCaeTest {
     public void testReadCommittedIsolationFound() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

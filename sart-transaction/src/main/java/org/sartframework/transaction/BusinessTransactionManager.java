@@ -2,11 +2,14 @@ package org.sartframework.transaction;
 
 import org.sartframework.aggregate.Publisher;
 import org.sartframework.command.DomainCommand;
+import org.sartframework.command.transaction.AttachTransactionDetailsCommand;
 import org.sartframework.event.DomainEvent;
+import org.sartframework.event.EventDescriptor;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
-import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
+import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.session.SystemTransaction;
@@ -54,5 +57,9 @@ public interface BusinessTransactionManager extends Publisher {
 
     Mono<TransactionStartedEvent> startListener(long xid);
 
+    Flux<TransactionDetailsAttachedEvent> detailsAttachedListener(long xid);
+    
     Flux<ConflictResolvedEvent> conflictListener(long xid);
+    
+    Flux<EventDescriptor> eventDescriptor();
 }

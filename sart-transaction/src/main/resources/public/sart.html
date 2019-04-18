@@ -1,0 +1,540 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+
+	<h1 style="font-family: Arial; color: #4376c7; text-align: center;">S
+		A R T</h1>
+
+	<div class="wrapper">
+		<div id="chartSummary"></div>
+		<br />
+		<div id="chartDetail"></div>
+		<script>
+			const XID_STORE_MAX_ENTRIES = 50;
+			const XID_SUMMARY_WINDOW_SIZE = 20;
+			const XID_DETAIL_WINDOW_SIZE = 20;
+			const XID_DETAIL_TIME_PADDING = 100;
+			const LINE_WIDTH_SUMMARY_MARKER = 6;
+			const LINE_WIDTH_DETAIL_MARKER = 4;
+			const OPACITY_SUMMARY_MARKER = 1;
+			const OPACITY_DETAIL_MARKER = 1;
+
+			const STARTED_SYMBOL = "diamond-open";
+			const COMMITTED_SYMBOL = "diamond-dot";
+			const ABORTED_SYMBOL = "diamond-dot";
+			const PROGRESS_SYMBOL = "diamond-dot";
+			const COMPENSATE_SYMBOL = "diamond-dot";
+			const DETAILS_ATTACHED_SYMBOL = "circle-open";
+
+			const STARTED_SYMBOL_SIZE = 24;
+			const COMMITTED_SYMBOL_SIZE = 24;
+			const ABORTED_SYMBOL_SIZE = 24;
+			const PROGRESS_SYMBOL_SIZE = 12;
+			const COMPENSATE_SYMBOL_SIZE = 12;
+			const DETAILS_ATTACHED_SYMBOL_SIZE = 24;
+
+			//https://colorpalettes.net/color-palette-571/
+			const STARTED_COLOR = "#4376c7";
+			const COMMITTED_COLOR = "#59711b";
+			const ABORTED_COLOR = "#ff3f0e";
+			const PROGRESS_COLOR = "#4376c7";
+			const COMPENSATE_COLOR = "#ff7729";
+			const DETAILS_ATTACHED_COLOR = "#ffc324";
+
+			const STATUS_RUNNING = "Running";
+			const STATUS_COMMITTED = "Committed";
+			const STATUS_ABORTED = "Aborted";
+			const STATUS_REVERTING = "Reverting";
+
+			const SUMMARY_PLOT_BUTTON_CONFIG = {
+				modeBarButtonsToRemove : [ 'sendDataToCloud', 'zoom2d',
+						'pan2d', 'select2d', 'lasso2d', 'zoomIn2d',
+						'zoomOut2d', 'hoverClosestCartesian',
+						'hoverCompareCartesian', 'toggleSpikelines',
+						'resetViews', 'resetScale2d' ],
+				displaylogo : false
+			};
+
+			const DETAIL_PLOT_BUTTON_CONFIG = SUMMARY_PLOT_BUTTON_CONFIG;
+			const SUMMARY_PLOT_REFRESH_RATE = 500;
+			const DETAIL_PLOT_REFRESH_RATE = 500;
+
+			const detailLayout = {
+				autosize : true,
+				showlegend : false,
+				xaxis : {
+					showgrid : true,
+					zeroline : false,
+					side : 'bottom',
+					showticklabels : false
+				},
+				yaxis : {
+					title : 'Event Type',
+					autorange : true,
+					showgrid : true,
+					zeroline : false,
+					type : 'category',
+					showline : false,
+					autotick : true,
+					ticks : '',
+					showticklabels : false,
+					side : 'left'
+				},
+				hovermode : 'closest'
+			};
+
+			const summaryLayout = {
+				autosize : true,
+				showlegend : false,
+				xaxis : {
+					type : 'category',
+					showline : false
+				},
+				yaxis : {
+					title : 'Event Count',
+					type : 'log',
+					showgrid : false
+				},
+				hovermode : 'closest'
+			};
+
+			var evtUrl = '/transaction/events';
+
+			var evtSource = new EventSource(evtUrl);
+
+			console.log(evtSource.withCredentials);
+			console.log(" Conn state : " + evtSource.readyState);
+			console.log(evtSource.url);
+
+			var txnMap = new Map();
+
+			function Txn(xid) {
+
+				this.xid = xid;
+				this.timeline = [];
+				this.eventline = [];
+				this.text = [];
+				this.symbol = [];
+				this.color = [];
+				this.size = [];
+				this.eventCount = 0;
+				this.status = STATUS_RUNNING;
+				this.startTime = 0;
+				this.currentTime = 0;
+				this.attachedDetails = {};
+
+				this.addEvent = function(eventData) {
+
+					if (eventData.eventName == "TransactionStartedEvent") {
+						this.text.push("Transaction Started");
+						this.eventline.push(eventData.eventName);
+						this.symbol.push(STARTED_SYMBOL);
+						this.color.push(STARTED_COLOR);
+						this.size.push(STARTED_SYMBOL_SIZE);
+						this.status = STATUS_RUNNING;
+						this.startTime = eventData.creationTime;
+					} else if (eventData.eventName == "TransactionCommittedEvent") {
+						this.text.push("Transaction Committed");
+						this.eventline.push(eventData.eventName);
+						this.symbol.push(COMMITTED_SYMBOL);
+						this.color.push(COMMITTED_COLOR);
+						this.size.push(COMMITTED_SYMBOL_SIZE);
+						this.status = STATUS_COMMITTED;
+						this.currentTime = eventData.creationTime;
+					} else if (eventData.eventName == "TransactionAbortedEvent") {
+						this.text.push("Transaction Aborted");
+						this.eventline.push(eventData.eventName);
+						this.symbol.push(ABORTED_SYMBOL);
+						this.color.push(ABORTED_COLOR);
+						this.size.push(ABORTED_SYMBOL_SIZE);
+						this.status = STATUS_ABORTED;
+						this.currentTime = eventData.creationTime;
+					} else if (eventData.eventName == "TransactionDetailsAttachedEvent") {
+						this.eventline.push(eventData.eventName);
+						this.symbol.push(DETAILS_ATTACHED_SYMBOL);
+						this.color.push(DETAILS_ATTACHED_COLOR);
+						this.size.push(DETAILS_ATTACHED_SYMBOL_SIZE);
+						this.currentTime = eventData.creationTime;
+						this.attachedDetails = JSON
+								.parse(eventData.eventDetail);
+						this.text.push(this.getAttachedDetailsText());
+					} else if (eventData.eventName == "ProgressLoggedEvent") {
+						this.text.push(eventData.eventDetail + "<br>XCS = "
+								+ eventData.xcs + "");
+						this.eventline.push(eventData.eventDetail);
+						this.currentTime = eventData.creationTime;
+
+						if (eventData.xcs > 0) {
+							this.symbol.push(PROGRESS_SYMBOL);
+							this.color.push(PROGRESS_COLOR);
+							this.size.push(PROGRESS_SYMBOL_SIZE);
+							//this.status = STATUS_RUNNING;
+						} else {
+							this.symbol.push(COMPENSATE_SYMBOL);
+							this.color.push(COMPENSATE_COLOR);
+							this.size.push(COMPENSATE_SYMBOL_SIZE);
+							if (this.status != STATUS_COMMITTED
+									&& this.status != STATUS_ABORTED) {
+								this.status = STATUS_REVERTING;
+							}
+						}
+					}
+					
+					this.eventCount++;
+					this.timeline.push(new Date(eventData.creationTime));
+				}
+
+				this.asDetailData = function() {
+
+					let trace = {};
+
+					trace.name = "TX " + this.xid;
+					trace.x = this.timeline;
+					trace.y = this.eventline;
+					trace.text = this.text;
+					trace.hoverinfo = 'text';
+					trace.type = "scatter";
+					trace.mode = "markers";
+					trace.marker = {};
+					trace.marker.color = this.color;
+					trace.marker.symbol = this.symbol;
+					trace.marker.size = this.size;
+					trace.marker.opacity = 1;
+					trace.marker.line = {};
+					trace.marker.line.color = this.color;
+					trace.marker.line.width = LINE_WIDTH_DETAIL_MARKER;
+
+					return trace;
+				}
+
+				this.getEventCount = function() {
+
+					return this.eventCount;
+				}
+
+				this.getColor = function() {
+
+					switch (this.status) {
+
+					case STATUS_RUNNING:
+						return PROGRESS_COLOR;
+					case STATUS_COMMITTED:
+						return COMMITTED_COLOR;
+					case STATUS_ABORTED:
+						return ABORTED_COLOR;
+					case STATUS_REVERTING:
+						return COMPENSATE_COLOR;
+					default:
+						return PROGRESS_COLOR;
+
+					}
+				}
+
+				this.getWindow = function(windowSize) {
+
+					let len = this.timeline.length;
+					let end = this.timeline[len - 1];
+					let start = windowSize < len ? this.timeline[len
+							- windowSize] : this.timeline[0];
+
+					return [
+							new Date(start.getTime() - XID_DETAIL_TIME_PADDING),
+							new Date(end.getTime() + XID_DETAIL_TIME_PADDING) ];
+				}
+
+				this.getDurationMillis = function() {
+
+					return this.currentTime - this.startTime;
+				}
+
+				this.getDurationSec = function() {
+
+					return getDurationMillis() / 1000;
+				}
+
+				this.getStatus = function() {
+
+					return this.status;
+				}
+
+				this.getAttachedDetails = function() {
+
+					return this.attachedDetails;
+				}
+
+				this.getSummaryText = function() {
+
+					return "XID = " + this.xid + "<br>Event Count = "
+							+ this.getEventCount() + "<br>Duration = "
+							+ this.getDurationMillis() + " ms<br><br>"
+							+ this.getAttachedDetailsText();
+				}
+
+				this.getAttachedDetailsText = function() {
+
+					if (!this.attachedDetails.hasOwnProperty("details"))
+						return "";
+
+					let details = this.attachedDetails.details;
+
+					if (details.length == 0)
+						return "";
+
+					let firstDetail = details[0];
+
+					let textContent = "" + "Hostname = " + firstDetail.hostName
+							+ "<br>" + "Host address = "
+							+ firstDetail.hostAddress + "<br>"
+							+ "Class name = " + firstDetail.className + "<br>"
+							+ "Method name = " + firstDetail.methodName
+							+ "<br>" + "Line number = "
+							+ firstDetail.lineNumber + "<br>";
+
+					return textContent;
+				}
+			}
+
+			function getSummaryData(txnMap) {
+
+				let x = [];
+
+				let y = [];
+
+				let text = [];
+
+				let color = [];
+
+				txnMap.forEach(function(txn, xid) {
+					x.push(xid);
+					y.push(txn.getEventCount());
+					color.push(txn.getColor());
+					text.push(txn.getSummaryText());
+				});
+
+				var trace = {};
+				trace.x = x;
+				trace.y = y;
+				trace.name = "XID";
+				trace.text = text;
+				trace.type = "bar";
+				trace.hoverinfo = 'text';
+				trace.hoverlabel = {};
+				trace.hoverlabel.bordercolor = color;
+				trace.marker = {};
+				trace.marker.color = "white";
+				trace.marker.opacity = 1;
+				trace.marker.line = {};
+				trace.marker.line.color = color;
+				trace.marker.line.width = LINE_WIDTH_SUMMARY_MARKER;
+
+				var data = [ trace ];
+
+				return data;
+			}
+
+			evtSource.onerror = function() {
+				console.log("EventSource failed.");
+			};
+
+			evtSource.onopen = function() {
+				console.log("Connection to server opened.");
+				console.log(" Conn state : " + evtSource.readyState);
+			};
+
+			evtSource.onmessage = function(e) {
+
+				let eventData = JSON.parse(e.data);
+
+				let txn;
+
+				if (txnMap.has(eventData.xid)) {
+
+					txn = txnMap.get(eventData.xid);
+
+				} else {
+
+					txn = new Txn(eventData.xid);
+
+					txnMap.set(eventData.xid, txn);
+				}
+
+				let count = txnMap.size;
+
+				if (count % 10 == 0 && count > XID_STORE_MAX_ENTRIES) {
+
+					for (let [xid, txn] of txnMap){
+						
+						txnMap.delete(xid);
+						
+						if(txnMap.size < XID_STORE_MAX_ENTRIES)
+							break;
+					}
+
+					console.log("XID_STORE_SIZE = " + txnMap.size);
+				}
+
+				txn.addEvent(eventData);
+			};
+
+			var emptySummaryData = [ {
+				x : [],
+				y : [],
+				type : 'bar'
+			} ];
+
+			Plotly.newPlot('chartSummary', emptySummaryData, summaryLayout,
+					SUMMARY_PLOT_BUTTON_CONFIG);
+
+			Plotly.newPlot('chartDetail', emptySummaryData, detailLayout,
+					DETAIL_PLOT_BUTTON_CONFIG);
+
+			var summaryPlot = document.getElementById('chartSummary');
+
+			var detailPlot = document.getElementById('chartDetail');
+
+			var streamDetail = true;
+
+			detailPlot.addEventListener("mouseenter", function(event) {
+				streamDetail = false;
+			});
+
+			detailPlot.addEventListener("mouseleave", function(event) {
+				streamDetail = true;
+			});
+
+			var streamSummary = true;
+
+			summaryPlot.addEventListener("mouseenter", function(event) {
+				streamSummary = false;
+			});
+
+			summaryPlot.addEventListener("mouseleave", function(event) {
+				streamSummary = true;
+			});
+
+			var dragLayerDetail = document.getElementsByClassName('nsewdrag')[1];
+
+			detailPlot.on('plotly_hover', function(data) {
+				dragLayerDetail.style.cursor = 'pointer';
+			});
+
+			detailPlot.on('plotly_unhover', function(data) {
+				dragLayerDetail.style.cursor = '';
+			});
+
+			var dragLayerSummary = document.getElementsByClassName('nsewdrag')[0];
+
+			summaryPlot.on('plotly_hover', function(data) {
+				dragLayerSummary.style.cursor = 'pointer'
+			});
+
+			summaryPlot.on('plotly_unhover', function(data) {
+				dragLayerSummary.style.cursor = ''
+			});
+
+			var summaryInterval = setInterval(function() {
+
+				if (streamSummary)
+					plotSummary();
+
+			}, SUMMARY_PLOT_REFRESH_RATE);
+
+			function plotSummary() {
+
+				let summaryData = getSummaryData(txnMap);
+
+				Plotly.react('chartSummary', summaryData, summaryLayout);
+
+				let txnCount = txnMap.size;
+
+				if (txnCount > XID_SUMMARY_WINDOW_SIZE) {
+
+					let xids = Array.from(txnMap.keys());
+
+					let windowStart = xids[txnCount - XID_SUMMARY_WINDOW_SIZE];
+
+					let windowEnd = xids[txnCount - 1];
+
+					Plotly.relayout('chartSummary', {
+
+						xaxis : {
+
+							showgrid : false,
+
+							zeroline : false,
+
+							showline : false,
+
+							range : [ windowStart - 0.5, windowEnd + 0.5 ]
+						}
+					});
+				}
+			}
+
+			var detailInterval;
+
+			summaryPlot.on('plotly_click', function(data) {
+
+				clearInterval(detailInterval);
+
+				let xid = data.points[0].x;
+
+				detailInterval = setInterval(function() {
+
+					if (streamDetail)
+						plotDetail(xid);
+
+				}, DETAIL_PLOT_REFRESH_RATE);
+
+			});
+
+			function plotDetail(xid) {
+
+				let txn = txnMap.get(xid);
+
+				let detailTrace = txn.asDetailData();
+
+				let detailData = [ detailTrace ];
+
+				Plotly.react('chartDetail', detailData, detailLayout);
+
+				let rangeX = txn.getWindow(XID_DETAIL_WINDOW_SIZE);
+
+				let colorX = txn.getColor();
+
+				let statusX = txn.getStatus();
+
+				let traceX = txn.getAttachedDetailsText();
+
+				Plotly.relayout('chartDetail', {
+
+					title : {
+
+						text : 'XID ' + xid + " - " + statusX,
+
+						font : {
+
+							size : 25,
+
+							color : colorX
+						}
+					},
+
+					xaxis : {
+
+						showgrid : true,
+
+						zeroline : false,
+
+						range : rangeX
+					}
+				});
+			}
+		</script>
+	</div>
+</body>
+</html>

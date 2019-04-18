@@ -11,6 +11,7 @@ import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommitRequestedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCreatedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.transaction.GenericTransactionAggregate;
 import org.sartframework.transaction.kafka.services.TransactionRollbackService;
@@ -62,6 +63,8 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
             handleTransactionAbortedEvent((TransactionAbortedEvent) transactionEvent);
         else if (transactionEvent instanceof ProgressLoggedEvent)
             handleProgressLoggedEvent((ProgressLoggedEvent) transactionEvent);
+        else if (transactionEvent instanceof TransactionDetailsAttachedEvent)
+            handleTransactionDetailsAttachedEvent((TransactionDetailsAttachedEvent) transactionEvent);
         else if (transactionEvent instanceof DomainEventCompensatedEvent)
             handleDomainEventCompensatedEvent((DomainEventCompensatedEvent) transactionEvent);
         else
@@ -72,21 +75,7 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
         KafkaBusinessTransactionManager.get().publish(transactionEvent);
     }
 
-//    @Override
-//    public void handleAbortTransactionCommand(AbortTransactionCommand abortTransactionCommand) {
-//        
-//        KafkaBusinessTransactionManager businessTransactionManager = KafkaBusinessTransactionManager.get();
-//        
-//        LOGGER.info("Starting TransactionRollbackService for {} ", getXid() );
-//        
-//        TransactionRollbackService transactionRollbackService = new TransactionRollbackService(getXid(), businessTransactionManager.getKafkaStreamsConfiguration()).start();
-//        
-//        businessTransactionManager.registerRollbackService(transactionRollbackService);
-//        
-//        super.handleAbortTransactionCommand(abortTransactionCommand);
-//    }
 
-    
     @Override
     public void handleTransactionAbortRequestedEvent(TransactionAbortRequestedEvent e) {
         

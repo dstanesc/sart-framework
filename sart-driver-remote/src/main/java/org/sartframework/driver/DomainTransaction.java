@@ -12,6 +12,7 @@ import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionStatus;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
@@ -30,6 +31,10 @@ public interface DomainTransaction extends TransactionStatus {
     
     DomainTransaction setIsolation(Isolation isolation);
     
+    boolean isEnableTraces();
+    
+    DomainTransaction setEnableTraces(boolean enableTraces);
+    
     DomainTransaction next();
 
     DomainTransaction start();
@@ -37,6 +42,8 @@ public interface DomainTransaction extends TransactionStatus {
     DomainTransaction commit();
 
     DomainTransaction abort();
+    
+    DomainTransaction attachTraceDetails(String traceName);
 
     DomainTransaction appendCommand(Supplier<? extends DomainCommand> commandSupplier);
     
@@ -47,6 +54,8 @@ public interface DomainTransaction extends TransactionStatus {
     DomainTransaction onAbort(Consumer<TransactionAbortedEvent> abortConsumer);
     
     DomainTransaction onComplete(Consumer<TransactionCompletedEvent> completeConsumer);
+    
+    DomainTransaction onDetailsAttached(Consumer<TransactionDetailsAttachedEvent> detailsConsumer);
 
     DomainTransaction onConflict(Consumer<ConflictResolvedEvent> conflictConsumer);
 
@@ -56,7 +65,7 @@ public interface DomainTransaction extends TransactionStatus {
     
     AtomicInteger getCommandSequenceCounter();
 
-    default DomainTransaction executeCommand(Supplier<DomainCommand> commandSupplier) {
+    default DomainTransaction executeCommand(Supplier<? extends DomainCommand> commandSupplier) {
 
         DomainCommand clientCommand = commandSupplier.get();
 
@@ -220,4 +229,6 @@ public interface DomainTransaction extends TransactionStatus {
 
         return getDriver().createDomainTransaction(isolation);
     }
+
+    
 }

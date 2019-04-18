@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
@@ -14,6 +15,9 @@ import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.session.SystemTransaction;
+import org.sartframework.transaction.TraceDetail;
+import org.sartframework.transaction.TraceDetailFactory;
+import org.sartframework.transaction.TransactionDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +31,9 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
     private Isolation isolation;
 
-    AtomicInteger commandSequenceCounter = new AtomicInteger(0);
+    private AtomicInteger commandSequenceCounter = new AtomicInteger(0);
+
+    private boolean enableTraces = false;
 
     public DefaultDomainTransaction(TransactionDriverInternal transactionDriverInternal) {
         this.transactionDriverInternal = transactionDriverInternal;
@@ -48,6 +54,17 @@ public class DefaultDomainTransaction implements DomainTransaction {
     @Override
     public Isolation getIsolation() {
         return isolation;
+    }
+
+    @Override
+    public boolean isEnableTraces() {
+        return enableTraces;
+    }
+
+    @Override
+    public DomainTransaction setEnableTraces(boolean enableTraces) {
+        this.enableTraces = enableTraces;
+        return this;
     }
 
     protected int getIsolationNumber() {
@@ -71,7 +88,6 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
         return localTransaction.getXid();
     }
-    
 
     public String getSid() {
 
@@ -80,7 +96,6 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
         return localTransaction.getSid();
     }
-    
 
     @Override
     public Status getStatus() {
@@ -110,9 +125,10 @@ public class DefaultDomainTransaction implements DomainTransaction {
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
             TransactionDriverInternal driver = getTransactionDriver();
-            
-            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer, null, null);
-            
+
+            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer, null,
+                null);
+
         });
 
         return this;
@@ -126,8 +142,9 @@ public class DefaultDomainTransaction implements DomainTransaction {
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
             TransactionDriverInternal driver = getTransactionDriver();
-            
-            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer, null, onComplete);
+
+            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer, null,
+                onComplete);
         });
 
         return this;
@@ -142,8 +159,9 @@ public class DefaultDomainTransaction implements DomainTransaction {
             LOGGER.info("System Snapshot for xid={} snap={}", startEvent.getXid(), startEvent.getSystemSnapshot());
 
             TransactionDriverInternal driver = getTransactionDriver();
-            
-            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer, errorConsumer, onComplete);
+
+            driver.onQuery(getXid(), getIsolationNumber(), getSystemSnapshot(startEvent), subscribe, domainQuery, resultType, resultConsumer,
+                errorConsumer, onComplete);
         });
 
         return this;
@@ -166,6 +184,11 @@ public class DefaultDomainTransaction implements DomainTransaction {
     public DomainTransaction next() {
 
         this.localTransaction = getTransactionDriver().nextTransactionInternal();
+
+        if (isEnableTraces()) {
+            
+            attachTraceDetails(TraceDetail.START_TRACE);
+        }
 
         return this;
     }
@@ -193,6 +216,18 @@ public class DefaultDomainTransaction implements DomainTransaction {
     public DomainTransaction abort() {
 
         getTransactionDriver().abortTransactionInternal(getXid());
+
+        return this;
+    }
+
+    @Override
+    public DomainTransaction attachTraceDetails(String traceName) {
+
+        TraceDetail traceDetail = TraceDetailFactory.collect(traceName);
+
+        TransactionDetails transactionDetails = new TransactionDetails(getXid()).addDetail(traceDetail);
+
+        getTransactionDriver().attachTransactionDetails(getXid(), transactionDetails);
 
         return this;
     }
@@ -243,6 +278,14 @@ public class DefaultDomainTransaction implements DomainTransaction {
     public DomainTransaction onComplete(Consumer<TransactionCompletedEvent> completeConsumer) {
 
         getTransactionDriver().onComplete(completeConsumer, getXid());
+
+        return this;
+    }
+
+    @Override
+    public DomainTransaction onDetailsAttached(Consumer<TransactionDetailsAttachedEvent> detailsConsumer) {
+
+        getTransactionDriver().onDetailsAttached(detailsConsumer, getXid());
 
         return this;
     }

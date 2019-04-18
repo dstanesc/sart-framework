@@ -12,22 +12,32 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.KStream;
+import org.sartframework.command.DomainCommand;
+import org.sartframework.event.DomainEvent;
+import org.sartframework.event.EventDescriptor;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.ProgressLoggedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
-import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
+import org.sartframework.event.transaction.TransactionCompletedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.service.ManagedService;
+import org.sartframework.transaction.TransactionDetails;
 import org.sartframework.transaction.TransactionMonitors;
 import org.sartframework.transaction.kafka.KafkaBusinessTransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import reactor.core.publisher.ReplayProcessor;
 
 @Component
 public class TransactionLifecycleMonitorService implements ManagedService<TransactionLifecycleMonitorService> {
@@ -44,7 +54,8 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
     
     ExecutorService executor = Executors.newFixedThreadPool(5);
     
-
+    ReplayProcessor<EventDescriptor> eventDescriptorFlux = ReplayProcessor.<EventDescriptor> create(1000);
+    
     @Autowired
     public TransactionLifecycleMonitorService(SartKafkaConfiguration kafkaStreamsConfiguration,
                                               KafkaBusinessTransactionManager businessTransactionManager) {
@@ -83,31 +94,59 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
     }
 
     protected void dispatchEvent(Long xid, TransactionEvent event) {
+        
         TransactionMonitors transactionMonitors = getSubscribedMonitors(xid);
 
         if (event instanceof TransactionStartedEvent) {
             transactionMonitors.onNextStart((TransactionStartedEvent) event);
+            EventDescriptor eventDescriptor = describe(xid, -1L, event);
+            eventDescriptorFlux.onNext(eventDescriptor);
         } else if (event instanceof TransactionCommittedEvent) {
             transactionMonitors.onNextCommit((TransactionCommittedEvent) event);
+            EventDescriptor eventDescriptor = describe(xid, -1L, event);
+            eventDescriptorFlux.onNext(eventDescriptor);
         }else if (event instanceof TransactionCompletedEvent) {
             transactionMonitors.onNextComplete((TransactionCompletedEvent) event);
         } else if (event instanceof TransactionAbortedEvent) {
             transactionMonitors.onNextAbort((TransactionAbortedEvent) event);
+            EventDescriptor eventDescriptor = describe(xid, -1L, event);
+            eventDescriptorFlux.onNext(eventDescriptor);
+        } else if (event instanceof TransactionDetailsAttachedEvent) {
+            transactionMonitors.onNextDetailsAttached((TransactionDetailsAttachedEvent) event);
+            EventDescriptor eventDescriptor = describe(xid, -1L, event);
+            eventDescriptorFlux.onNext(eventDescriptor);
         } else if (event instanceof ConflictResolvedEvent) {
             transactionMonitors.onNextConflict((ConflictResolvedEvent) event);
         } else if (event instanceof ProgressLoggedEvent) {
-
             ProgressLoggedEvent progressEvent = (ProgressLoggedEvent) event;
-
-            long xcs = progressEvent.getXcs();
-
-            if (xcs < 0) {
-                transactionMonitors.onNextCompensate(progressEvent.getDomainEvent());
-            } else if (xcs > 0) {
-                transactionMonitors.onNextProgress(progressEvent.getDomainEvent());
-            } else
-                throw new UnsupportedOperationException(" Invalid xcs " + xcs);
+            transactionMonitors.onNextLogged(progressEvent);
+            EventDescriptor eventDescriptor = describe(xid, progressEvent.getXcs(), event);
+            eventDescriptorFlux.onNext(eventDescriptor);
         }
+    }
+
+    private EventDescriptor describe(Long xid, Long xcs, TransactionEvent event) {
+        EventDescriptor eventDescriptor = new EventDescriptor();
+        eventDescriptor.setEventName(event.getClass().getSimpleName());
+        if (event instanceof ProgressLoggedEvent) {
+            ProgressLoggedEvent progressEvent = (ProgressLoggedEvent) event;
+            DomainEvent<? extends DomainCommand> domainEvent = progressEvent.getDomainEvent();
+            eventDescriptor.setEventDetail(domainEvent.getClass().getSimpleName());
+        } else if (event instanceof TransactionDetailsAttachedEvent) {
+            TransactionDetailsAttachedEvent detailsAttachedEvent = (TransactionDetailsAttachedEvent) event;
+            TransactionDetails transactionDetails = detailsAttachedEvent.getDetails();
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                String payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transactionDetails);
+                eventDescriptor.setEventDetail(payload);
+            } catch (JsonProcessingException e) {
+                LOGGER.error("Cannot serialize to json", e);
+            }
+        }
+        eventDescriptor.setCreationTime(event.getCreationTime());
+        eventDescriptor.setXid(xid);
+        eventDescriptor.setXcs(xcs);
+        return eventDescriptor;
     }
 
     public synchronized boolean hasSubscribedMonitors(long xid) {
@@ -150,4 +189,7 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
         return kafkaStreams;
     }
 
+    public ReplayProcessor<EventDescriptor> getEventDescriptorFlux() {
+        return eventDescriptorFlux;
+    }
 }
