@@ -16,59 +16,27 @@ import org.sartframework.event.TransactionEvent;
 
 public abstract class AnnotatedDomainAggregate extends GenericDomainAggregate implements CommandHandlingAggregate {
 
-//    private transient Consumer<DomainEvent<? extends DomainCommand>> domainEventChannel;
-//
-//    private transient Consumer<DomainCommand> domainCommandChannel;
-//
-//    private transient Consumer<TransactionCommand> transactionCommandChannel;
-//
-//    private transient Consumer<TransactionEvent> transactionEventChannel;
-//
-//    public AnnotatedDomainAggregate setDomainEventChannel(Consumer<DomainEvent<? extends DomainCommand>> domainEventChannel) {
-//        this.domainEventChannel = domainEventChannel;
-//        return this;
-//    }
-//
-//    public AnnotatedDomainAggregate setDomainCommandChannel(Consumer<DomainCommand> domainCommandChannel) {
-//        this.domainCommandChannel = domainCommandChannel;
-//        return this;
-//    }
-//
-//    public AnnotatedDomainAggregate setTransactionCommandChannel(Consumer<TransactionCommand> transactionCommandChannel) {
-//        this.transactionCommandChannel = transactionCommandChannel;
-//        return this;
-//    }
-//
-//    public AnnotatedDomainAggregate setTransactionEventChannel(Consumer<TransactionEvent> transactionEventChannel) {
-//        this.transactionEventChannel = transactionEventChannel;
-//        return this;
-//    }
-//
-    
-    
+
     private transient Publisher publisher;
     
     @Override
     public void publish(TransactionCommand transactionCommand) {
         publisher.publish(transactionCommand);
-       // transactionCommandChannel.accept(transactionCommand);
+       
     }
 
     @Override
     public void publish(TransactionEvent transactionEvent) {
        publisher.publish(transactionEvent);
-       // transactionEventChannel.accept(transactionEvent);
     }
 
     @Override
     public void publish(DomainCommand atomicCommand) {
         publisher.publish(atomicCommand);
-       // domainCommandChannel.accept(atomicCommand);
     }
 
     @Override
     public void publish(DomainEvent<? extends DomainCommand> domainEvent) {
-        //domainEventChannel.accept(domainEvent);
         publisher.publish(domainEvent);
     }
 

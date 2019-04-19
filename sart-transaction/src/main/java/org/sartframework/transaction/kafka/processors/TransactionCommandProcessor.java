@@ -63,7 +63,7 @@ public class TransactionCommandProcessor implements Processor<Long, TransactionC
                 throw new RuntimeException("invalid transaction command " + transactionCommand);
         }
 
-        txnAggregate.setStreamsContext(streamsContext);
+        txnAggregate.setPublisher(streamsContext);
         
         txnAggregate.handle(transactionCommand);
 

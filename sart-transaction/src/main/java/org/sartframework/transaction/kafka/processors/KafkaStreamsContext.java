@@ -1,8 +1,7 @@
 package org.sartframework.transaction.kafka.processors;
 
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.sartframework.aggregate.CommandChannel;
-import org.sartframework.aggregate.EventChannel;
+import org.sartframework.aggregate.Publisher;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionCommand;
 import org.sartframework.event.DomainEvent;
@@ -10,7 +9,7 @@ import org.sartframework.event.TransactionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KafkaStreamsContext implements CommandChannel, EventChannel {
+public class KafkaStreamsContext implements Publisher {
     
     final static Logger LOGGER = LoggerFactory.getLogger(KafkaStreamsContext.class);
     

@@ -1,5 +1,6 @@
 package org.sartframework.transaction.kafka;
 
+import org.sartframework.aggregate.Publisher;
 import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionCommand;
@@ -14,7 +15,6 @@ import org.sartframework.event.transaction.TransactionCreatedEvent;
 import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.transaction.GenericTransactionAggregate;
-import org.sartframework.transaction.kafka.processors.KafkaStreamsContext;
 import org.sartframework.transaction.kafka.services.TransactionRollbackService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,32 +24,27 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
 
     final static Logger LOGGER = LoggerFactory.getLogger(KafkaTransactionAggregate.class);
     
+    private transient Publisher publisher;
     
-    private transient KafkaStreamsContext streamsContext;
-    
-
-    public KafkaStreamsContext getStreamsContext() {
-        return streamsContext;
+    public Publisher getPublisher() {
+        return publisher;
     }
 
-    public KafkaTransactionAggregate setStreamsContext(KafkaStreamsContext streamsContext) {
-        this.streamsContext = streamsContext;
+    public KafkaTransactionAggregate setPublisher(Publisher publisher) {
+        this.publisher = publisher;
         return this;
     }
-    
 
     @Override
     protected void dispatch(DomainCommand domainCommand) {
-        
-        getStreamsContext().publish(domainCommand);
+        getPublisher().publish(domainCommand);
     }
 
     
     
     @Override
     protected void dispatch(TransactionCommand transactionCommand) {
-        
-        getStreamsContext().publish(transactionCommand);
+        getPublisher().publish(transactionCommand);
     }
 
 
@@ -80,7 +75,7 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
         else
             throw new UnsupportedOperationException();
         
-        getStreamsContext().publish(transactionEvent);
+        getPublisher().publish(transactionEvent);
     }
 
 
