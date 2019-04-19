@@ -37,7 +37,7 @@ Terminal 3
 ./gradlew :sart-cae-conflict:bootRun
 ```
 
-#### Open Monitoring Dashboard
+##### Open Monitoring Dashboard
 
 ```bash
 http://localhost:8080/sart.html
