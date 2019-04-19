@@ -14,6 +14,7 @@ import org.sartframework.event.transaction.TransactionCreatedEvent;
 import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.transaction.GenericTransactionAggregate;
+import org.sartframework.transaction.kafka.processors.KafkaStreamsContext;
 import org.sartframework.transaction.kafka.services.TransactionRollbackService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +24,24 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
 
     final static Logger LOGGER = LoggerFactory.getLogger(KafkaTransactionAggregate.class);
     
+    
+    private transient KafkaStreamsContext streamsContext;
+    
+
+    public KafkaStreamsContext getStreamsContext() {
+        return streamsContext;
+    }
+
+    public KafkaTransactionAggregate setStreamsContext(KafkaStreamsContext streamsContext) {
+        this.streamsContext = streamsContext;
+        return this;
+    }
+    
 
     @Override
     protected void dispatch(DomainCommand domainCommand) {
         
-        LOGGER.info("KafkaBusinessTransactionManager publish domain command {} ", domainCommand);
-        
-        KafkaBusinessTransactionManager.get().publish(domainCommand);
+        getStreamsContext().publish(domainCommand);
     }
 
     
@@ -37,9 +49,7 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
     @Override
     protected void dispatch(TransactionCommand transactionCommand) {
         
-        LOGGER.info("KafkaBusinessTransactionManager publish transaction command {} ", transactionCommand);
-        
-        KafkaBusinessTransactionManager.get().publish(transactionCommand);
+        getStreamsContext().publish(transactionCommand);
     }
 
 
@@ -69,10 +79,8 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
             handleDomainEventCompensatedEvent((DomainEventCompensatedEvent) transactionEvent);
         else
             throw new UnsupportedOperationException();
-
-        LOGGER.info("KafkaBusinessTransactionManager publish event {} ", transactionEvent);
         
-        KafkaBusinessTransactionManager.get().publish(transactionEvent);
+        getStreamsContext().publish(transactionEvent);
     }
 
 
@@ -100,9 +108,6 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
        
         KafkaBusinessTransactionManager.get().unregisterRollbackService(e.getXid());
         
-        //FIXME TOO early !!!!
-        //KafkaBusinessTransactionManager.get().unregisterTransactionMonitors(e.getXid());
-        // unregisterRollbackService
         super.handleTransactionAbortedEvent(e);
     }
 
@@ -110,11 +115,7 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
     @Override
     public void handleTransactionCommittedEvent(TransactionCommittedEvent e) {
         
-        //FIXME TOO early !!!!
-        //KafkaBusinessTransactionManager.get().unregisterTransactionMonitors(e.getXid());
-        
         super.handleTransactionCommittedEvent(e);
-        
     }
     
 }

@@ -22,11 +22,14 @@ public class TransactionCommandProcessor implements Processor<Long, TransactionC
     final SartKafkaConfiguration kafkaStreamsConfiguration;
     
     final BusinessTransactionManager businessTransactionManager;
+    
+    final KafkaStreamsContext streamsContext;
 
-    public TransactionCommandProcessor(SartKafkaConfiguration kafkaStreamsConfiguration, BusinessTransactionManager businessTransactionManager) {
+    public TransactionCommandProcessor(SartKafkaConfiguration kafkaStreamsConfiguration, BusinessTransactionManager businessTransactionManager, KafkaStreamsContext streamsContext) {
         super();
         this.kafkaStreamsConfiguration = kafkaStreamsConfiguration;
         this.businessTransactionManager = businessTransactionManager;
+        this.streamsContext = streamsContext;
     }
 
     @SuppressWarnings("unchecked")
@@ -37,6 +40,8 @@ public class TransactionCommandProcessor implements Processor<Long, TransactionC
 
         this.aggregateStore = (KeyValueStore<Long, KafkaTransactionAggregate>) context
             .getStateStore(kafkaStreamsConfiguration.getTransactionStoreName());
+        
+        this.streamsContext.initContext(context);
     }
 
     @Override
@@ -58,20 +63,8 @@ public class TransactionCommandProcessor implements Processor<Long, TransactionC
                 throw new RuntimeException("invalid transaction command " + transactionCommand);
         }
 
-       // This code to validate
+        txnAggregate.setStreamsContext(streamsContext);
         
-//        txnAggregate.setDomainCommandChannel(c -> {
-//            LOGGER.info("Forwarding to domain-command-sink {} ", c);
-//            context.forward(c.getAggregateKey(), c, "domain-command-sink");
-//            context.commit();
-//        });
-//
-//        txnAggregate.setTransactionEventChannel(e -> {
-//            LOGGER.info("Forwarding to transaction-event-sink {} ", e);
-//            context.forward(xid, e, "transaction-event-sink");
-//            context.commit();
-//        });
-
         txnAggregate.handle(transactionCommand);
 
         aggregateStore.put(xid, txnAggregate);

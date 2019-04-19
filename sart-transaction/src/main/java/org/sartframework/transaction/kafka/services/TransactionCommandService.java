@@ -12,6 +12,7 @@ import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.service.ManagedService;
 import org.sartframework.transaction.kafka.KafkaBusinessTransactionManager;
 import org.sartframework.transaction.kafka.KafkaTransactionAggregate;
+import org.sartframework.transaction.kafka.processors.KafkaStreamsContext;
 import org.sartframework.transaction.kafka.processors.TransactionCommandProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +23,9 @@ import org.springframework.stereotype.Component;
 public class TransactionCommandService implements ManagedService<TransactionCommandService> {
 
     final static Logger LOGGER = LoggerFactory.getLogger(TransactionCommandService.class);
-    
+
     final SartKafkaConfiguration kafkaStreamsConfiguration;
-    
+
     final KafkaBusinessTransactionManager businessTransactionManager;
 
     KafkaStreams kafkaStreams;
@@ -40,38 +41,50 @@ public class TransactionCommandService implements ManagedService<TransactionComm
     public TransactionCommandService start() {
 
         LOGGER.info("Starting transaction command service topology");
-        
+
         final Topology commandHandlingTopology = new Topology();
 
-        StoreBuilder<KeyValueStore<Long, KafkaTransactionAggregate>> aggregateStoreBuilder = Stores.<Long, KafkaTransactionAggregate> keyValueStoreBuilder(
-            Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getTransactionStoreName()), Serdes.Long(), SartSerdes.TransactionAggregateSerde());
+        StoreBuilder<KeyValueStore<Long, KafkaTransactionAggregate>> aggregateStoreBuilder = Stores
+            .<Long, KafkaTransactionAggregate> keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(kafkaStreamsConfiguration.getTransactionStoreName()), Serdes.Long(),
+                SartSerdes.TransactionAggregateSerde());
 
         commandHandlingTopology
             .addSource("transaction-command-source", SartSerdes.Long().deserializer(), SartSerdes.TransactionCommandSerde().deserializer(),
                 kafkaStreamsConfiguration.getTransactionCommandTopic())
 
-            .addProcessor("transaction-command-validator", () -> new TransactionCommandProcessor(kafkaStreamsConfiguration, businessTransactionManager),
-                "transaction-command-source")
+            .addProcessor("transaction-command-validator", () -> {
 
-            .addStateStore(aggregateStoreBuilder, "transaction-command-validator");
-//FIXME, should be used instead see  TransactionCommandProcessor      
-/*
+                KafkaStreamsContext streamsContext = new KafkaStreamsContext()
+                    .setDomainCommandChannel("domain-command-sink")
+                    .setTransactionCommandChannel("transaction-command-sink")
+                    .setTransactionEventChannel("transaction-event-sink");
+
+                return new TransactionCommandProcessor(kafkaStreamsConfiguration, businessTransactionManager, streamsContext);
+
+            }, "transaction-command-source")
+
+            .addStateStore(aggregateStoreBuilder, "transaction-command-validator")
+
             .addSink("transaction-command-sink", kafkaStreamsConfiguration.getTransactionCommandTopic(), SartSerdes.Long().serializer(),
                 SartSerdes.TransactionCommandSerde().serializer(), "transaction-command-validator")
+            
+            .addSink("transaction-event-sink", kafkaStreamsConfiguration.getTransactionEventTopic(), SartSerdes.Long().serializer(),
+                SartSerdes.TransactionEventSerde().serializer(), "transaction-command-validator")
 
             .addSink("domain-command-sink", kafkaStreamsConfiguration.getDomainCommandTopic(), SartSerdes.String().serializer(),
                 SartSerdes.DomainCommandSerde().serializer(), "transaction-command-validator");
 
-*/
+
         kafkaStreams = new KafkaStreams(commandHandlingTopology,
             new StreamsConfig(kafkaStreamsConfiguration.getKafkaStreamsProcessorConfig("transaction-command-processor")));
 
         kafkaStreams.start();
 
         LOGGER.info("Transaction command service topology started");
-        
+
         businessTransactionManager.registerTransactionCommandService(this);
-        
+
         return this;
     }
 
