@@ -37,6 +37,7 @@ public class EvolvableStructureSerializer<T> implements GenericSerializer<T> {
         T deserialized = contentSerializer.deserialize(payload);
         
         //check type safety w/ Spring's ParametrizedTypeReference
+        @SuppressWarnings("unchecked")
         Class<T> operationClass = (Class<T>) deserialized.getClass();
         
         LOGGER.debug("Deserialized class={} ", operationClass);
@@ -53,6 +54,7 @@ public class EvolvableStructureSerializer<T> implements GenericSerializer<T> {
         return deserialized;
     }
 
+    @SuppressWarnings("unchecked")
     public byte[] serialize(T t) {
 
         if (t == null)

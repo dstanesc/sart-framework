@@ -52,6 +52,7 @@ public class PlatformOperationRegistry {
         return init();
     }
 
+    @SuppressWarnings("static-access")
     public final PlatformOperationRegistry init() {
 
         this.instance = this;
@@ -103,6 +104,7 @@ public class PlatformOperationRegistry {
         return adapterRegistry.containsKey(operation);
     }
 
+    @SuppressWarnings("unchecked")
     public final <T> Adapter<T> getAdapter(Class<T> operation) {
 
         return (Adapter<T>) adapterRegistry.get(operation);
@@ -117,11 +119,13 @@ public class PlatformOperationRegistry {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public final <T> EvolvableStructure<T> getEvolvableStructureByJavaClass(Class<T> javaType) {
 
         return (EvolvableStructure<T>) versionsByJavaClass.get(javaType);
     }
 
+    @SuppressWarnings("unchecked")
     public final <T> ContentSerializer<T> getContentSerializer(String structureIdentity, int structureVersion, boolean latestAvailable) {
 
         VersionChain<T> versionChain = (VersionChain<T>) versionsByIdentity.get(structureIdentity);
@@ -144,6 +148,7 @@ public class PlatformOperationRegistry {
         new VersionedStructureScanner<>(category).scanAndRegister(basePackage, this);
     }
 
+    @SuppressWarnings("unchecked")
     public final <T> void registerEvolvableStructure(Class<T> serializableStructure, String structureIdentity, int structureVersion,
                                                      ContentSerializer<T> contentSerializer) {
 

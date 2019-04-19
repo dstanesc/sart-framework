@@ -1,5 +1,7 @@
 package org.sartframework.driver;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -7,16 +9,17 @@ import java.util.function.Supplier;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
-import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.session.SystemTransaction;
+import org.sartframework.transaction.AbstractDetail;
+import org.sartframework.transaction.DetailFactory;
 import org.sartframework.transaction.TraceDetail;
-import org.sartframework.transaction.TraceDetailFactory;
 import org.sartframework.transaction.TransactionDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +36,7 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
     private AtomicInteger commandSequenceCounter = new AtomicInteger(0);
 
-    private boolean enableTraces = false;
+    List<DetailFactory<? extends AbstractDetail>> detailFactories = new ArrayList<>();
 
     public DefaultDomainTransaction(TransactionDriverInternal transactionDriverInternal) {
         this.transactionDriverInternal = transactionDriverInternal;
@@ -57,13 +60,13 @@ public class DefaultDomainTransaction implements DomainTransaction {
     }
 
     @Override
-    public boolean isEnableTraces() {
-        return enableTraces;
+    public boolean isEnableDetails() {
+        return !detailFactories.isEmpty();
     }
 
     @Override
-    public DomainTransaction setEnableTraces(boolean enableTraces) {
-        this.enableTraces = enableTraces;
+    public <T extends AbstractDetail> DomainTransaction setEnableDetails(DetailFactory<T> detailFactory) {
+        this.detailFactories.add(detailFactory);
         return this;
     }
 
@@ -185,9 +188,12 @@ public class DefaultDomainTransaction implements DomainTransaction {
 
         this.localTransaction = getTransactionDriver().nextTransactionInternal();
 
-        if (isEnableTraces()) {
-            
-            attachTraceDetails(TraceDetail.START_TRACE);
+        if (isEnableDetails()) {
+
+            detailFactories.forEach(detailFactory -> {
+                attachTransactionDetails(TraceDetail.START_TRACE, detailFactory);
+            });
+
         }
 
         return this;
@@ -221,11 +227,11 @@ public class DefaultDomainTransaction implements DomainTransaction {
     }
 
     @Override
-    public DomainTransaction attachTraceDetails(String traceName) {
+    public <T extends AbstractDetail> DomainTransaction attachTransactionDetails(String traceName, DetailFactory<T> detailFactory) {
 
-        TraceDetail traceDetail = TraceDetailFactory.collect(traceName);
+        T abstractDetail = detailFactory.collect(traceName);
 
-        TransactionDetails transactionDetails = new TransactionDetails(getXid()).addDetail(traceDetail);
+        TransactionDetails transactionDetails = new TransactionDetails(getXid()).addDetail(abstractDetail);
 
         getTransactionDriver().attachTransactionDetails(getXid(), transactionDetails);
 

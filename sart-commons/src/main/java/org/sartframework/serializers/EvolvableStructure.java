@@ -58,6 +58,7 @@ public class EvolvableStructure<T> implements Comparable<EvolvableStructure<T>> 
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

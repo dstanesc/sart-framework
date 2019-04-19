@@ -1,6 +1,7 @@
 package org.sartframework.driver;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -17,14 +18,16 @@ import org.sartframework.command.transaction.AttachTransactionDetailsCommand;
 import org.sartframework.command.transaction.TransactionStatus.Isolation;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
-import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.session.SystemTransaction;
+import org.sartframework.transaction.AbstractDetail;
+import org.sartframework.transaction.DetailFactory;
 import org.sartframework.transaction.TransactionDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class DefaultRestTransactionDriver implements TransactionDriverInternal, RestTransactionDriver  {
+public class DefaultRestTransactionDriver implements TransactionDriverInternal, RestTransactionDriver {
 
     final static Logger LOGGER = LoggerFactory.getLogger(DefaultRestTransactionDriver.class);
 
@@ -49,27 +52,26 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
     private Set<RestQueryApi> queryApis = new LinkedHashSet<>();
 
     private Set<RestCommandApi> commandApis = new LinkedHashSet<>();
-    
+
     private WebClient transactionClient;
 
-    boolean enableTraces = false;
-    
-    public DefaultRestTransactionDriver() {}
+    List<DetailFactory<? extends AbstractDetail>> detailFactories = new ArrayList<>();
 
-    
+    public DefaultRestTransactionDriver() {
+    }
+
     @Override
     public String getSid() {
         // FIXME dstanesc -- Auto-generated method stub
         return null;
     }
 
-
     @Override
     public RestTransactionDriver init() {
         this.transactionClient = WebClient.create(transactionApi.toUrl());
         return this;
     }
-    
+
     public RestTransactionDriver registerTransactionApi(RestTransactionApi transactionApi) {
         this.transactionApi = transactionApi;
         return this;
@@ -86,10 +88,10 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
         commandApis.add(api);
         return this;
     }
-    
+
     @Override
-    public RestTransactionDriver attachTraces() {
-        this.enableTraces = true;
+    public <T extends AbstractDetail> RestTransactionDriver registerDetailFactory(DetailFactory<T> detailFactory) {
+        this.detailFactories.add(detailFactory);
         return this;
     }
 
@@ -110,15 +112,21 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
     @Override
     public DomainTransaction createDomainTransaction(Isolation isolation) {
 
-        return new DefaultDomainTransaction(this).setIsolation(isolation).setEnableTraces(enableTraces).next();
+        DomainTransaction transaction = new DefaultDomainTransaction(this).setIsolation(isolation);
+        
+        detailFactories.forEach(factory -> {
+            
+            transaction.setEnableDetails(factory);
+        });
+        
+        return transaction.next();
     }
-
 
     @Override
     public SystemTransaction nextTransactionInternal() {
 
         try {
-            
+
             String apiUrl = "/transaction/get";
 
             Request request = Request.Get(transactionApi.toUrl() + apiUrl);
@@ -130,12 +138,12 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
             ObjectMapper mapper = new ObjectMapper();
 
             SystemTransaction systemTransaction = mapper.readValue(jsonTransaction, SystemTransaction.class);
-            
+
             return systemTransaction;
-            
+
         } catch (JsonParseException e) {
-            
-           throw new RuntimeException(e);
+
+            throw new RuntimeException(e);
         } catch (JsonMappingException e) {
             throw new RuntimeException(e);
         } catch (ClientProtocolException e) {
@@ -156,7 +164,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
             Request request = Request.Post(transactionApi.toUrl() + apiUrl);
 
             performMappedRequest(request);
-            
+
         } catch (JsonParseException e) {
             throw new RuntimeException(e);
         } catch (JsonMappingException e) {
@@ -180,7 +188,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
             Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
 
             performMappedRequest(request);
-            
+
         } catch (JsonParseException e) {
             throw new RuntimeException(e);
         } catch (JsonMappingException e) {
@@ -204,7 +212,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
             Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
 
             performMappedRequest(request);
-            
+
         } catch (JsonParseException e) {
             throw new RuntimeException(e);
         } catch (JsonMappingException e) {
@@ -218,7 +226,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
     }
 
     @Override
-    public int statusTransactionInternal(long xid)  {
+    public int statusTransactionInternal(long xid) {
 
         try {
             String apiUrl = "/transaction/" + xid + "/status";
@@ -230,7 +238,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
             LOGGER.info("Retrieved transaction status {} -> {}", xid, status);
 
             return status;
-            
+
         } catch (NumberFormatException e) {
             throw new RuntimeException(e);
         } catch (ClientProtocolException e) {
@@ -240,21 +248,19 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
         }
     }
 
-    
-    
     @Override
     public void attachTransactionDetails(long xid, TransactionDetails transactionDetails) {
-      
+
         LOGGER.info("Attach transaction details {}", xid);
-        
+
         String apiUrl = "/transaction/" + xid + "/attachDetails";
-        
+
         Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
-        
+
         ObjectMapper objectMapper = new ObjectMapper();
 
         AttachTransactionDetailsCommand attachDetailsCommand = new AttachTransactionDetailsCommand(transactionDetails);
-        
+
         try {
 
             String payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(attachDetailsCommand);
@@ -263,13 +269,12 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
                 .bodyString(payload, ContentType.APPLICATION_JSON).execute().returnContent().asString();
 
             LOGGER.info("Attach transaction details command returned : " + status);
-            
+
         } catch (IOException e) {
 
             throw new RuntimeException(e);
         }
     }
-
 
     @Override
     public SystemSnapshot snapshotTransactionInternal(long xid) {
@@ -375,20 +380,18 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
         progressFlux.subscribe(progressConsumer);
     }
 
-    
     @Override
     public void onDetailsAttached(Consumer<TransactionDetailsAttachedEvent> detailsConsumer, long xid) {
-      
+
         LOGGER.info("Subscribe to attached transaction details events of {}", xid);
-        
+
         String apiUrl = "/transaction/{xid}/detailsAttachedListener";
-        
+
         Flux<TransactionDetailsAttachedEvent> compensateFlux = transactionClient.get().uri(apiUrl, xid).accept(MediaType.APPLICATION_STREAM_JSON)
             .retrieve().bodyToFlux(TransactionDetailsAttachedEvent.class);
 
         compensateFlux.subscribe(detailsConsumer);
     }
-
 
     @Override
     public <T extends DomainEvent<? extends DomainCommand>> void onCompensate(Consumer<T> compensateConsumer, Class<T> eventType, long xid) {
@@ -411,19 +414,18 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
         Class<? extends DomainQuery> queryType = domainQuery.getClass();
 
         List<RestQueryApi> apis = queryApis.stream().filter(api -> api.hasQuerySupport(queryType)).collect(Collectors.toList());
-        
+
         if (!apis.isEmpty()) {
-            
+
             for (RestQueryApi api : apis) {
-                
+
                 onQuery(xid, isolation, systemSnapshot, subscribe, domainQuery, resultType, resultConsumer, errorConsumer, onComplete, api);
             }
-            
+
         } else
             throw new UnsupportedOperationException("Unsupported query " + domainQuery);
     }
 
-    
     @Override
     public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,
                                                    Class<R> resultType, Consumer<R> resultConsumer, Consumer<? super Throwable> errorConsumer,
@@ -469,8 +471,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
         } else
             throw new UnsupportedOperationException("Unsupported query " + domainQuery);
     }
-    
-    
+
     @Override
     public <C extends DomainCommand> void sendCommand(C domainCommand) {
 

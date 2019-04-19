@@ -13,6 +13,7 @@ import org.sartframework.driver.RestConflictQueryApi;
 import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.TransactionDriver;
 import org.sartframework.transaction.TraceDetail;
+import org.sartframework.transaction.TraceDetailFactory;
 import org.sartframework.transaction.TransactionDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ public class AttachDetailsTest extends AbstractCaeTest {
             detailsLock.complete(details);
         })
 
-        .attachTraceDetails(TraceDetail.START_TRACE)
+        .attachTransactionDetails(TraceDetail.START_TRACE, new TraceDetailFactory())
 
         .executeCommand(() -> {
             
@@ -63,7 +64,7 @@ public class AttachDetailsTest extends AbstractCaeTest {
         
         Assert.assertEquals("testTransactionAttachTraceDetails", traceDetail.getMethodName());
         
-        Assert.assertEquals(47, traceDetail.getLineNumber());
+        Assert.assertEquals(48, traceDetail.getLineNumber());
     }
     
     
@@ -74,7 +75,7 @@ public class AttachDetailsTest extends AbstractCaeTest {
             .registerTransactionApi(new RestTransactionApi())
             .registerQueryApi(new RestConflictQueryApi())
             .registerCommandApi(new RestSimulationApi())
-            .attachTraces()
+            .registerDetailFactory(new TraceDetailFactory())
             .init();
 
         CompletableFuture<TransactionDetails> detailsLock = new CompletableFuture<>();
@@ -108,7 +109,7 @@ public class AttachDetailsTest extends AbstractCaeTest {
         
         Assert.assertEquals("testDriverAttachTraceDetails", traceDetail.getMethodName());
         
-        Assert.assertEquals(85, traceDetail.getLineNumber());
+        Assert.assertEquals(86, traceDetail.getLineNumber());
     }
 
 

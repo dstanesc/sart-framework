@@ -12,12 +12,14 @@ import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionStatus;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
-import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
+import org.sartframework.transaction.AbstractDetail;
+import org.sartframework.transaction.DetailFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,9 +33,9 @@ public interface DomainTransaction extends TransactionStatus {
     
     DomainTransaction setIsolation(Isolation isolation);
     
-    boolean isEnableTraces();
+    boolean isEnableDetails();
     
-    DomainTransaction setEnableTraces(boolean enableTraces);
+    <T extends AbstractDetail> DomainTransaction setEnableDetails(DetailFactory<T> detailFactory);
     
     DomainTransaction next();
 
@@ -43,7 +45,7 @@ public interface DomainTransaction extends TransactionStatus {
 
     DomainTransaction abort();
     
-    DomainTransaction attachTraceDetails(String traceName);
+    <T extends AbstractDetail> DomainTransaction attachTransactionDetails(String traceName, DetailFactory<T> detailFactory);
 
     DomainTransaction appendCommand(Supplier<? extends DomainCommand> commandSupplier);
     

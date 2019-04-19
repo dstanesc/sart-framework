@@ -37,6 +37,7 @@ public class TransactionDetails {
         return details;
     }
     
+    @SuppressWarnings("unchecked")
     public <T extends AbstractDetail>  Optional<T> getDetail(String detailName) {
         
         Optional<T> out = null;

@@ -37,6 +37,12 @@ Terminal 3
 ./gradlew :sart-cae-conflict:bootRun
 ```
 
+#### Open Monitoring Dashboard
+
+```bash
+http://localhost:8080/sart.html
+```
+
 ##### Execute Tests
 ```bash
 ./gradlew :sart-cae-transaction:test --tests org.sartframework.demo.cae.ValidationSuite  
@@ -773,9 +779,9 @@ The above snippet is entirely non-blocking, excepting the intentional chaining o
 
 ## Observability
 
-Indisputably the traditional Simulation Data Management deployments benefit extensively from the execution insights exposed by technologies such __monitoring infrastructure__ on the quality, behavior and performance of data processing activities in general and database interactions in particular. Unfortunately, in the same time, the deployments suffer because of the limited monitoring scope and the negative impact on scalability and performance of the subjected system, especially in productive environments.
+Indisputably the traditional Simulation Data Management deployments benefit extensively from the execution insights exposed by technologies such as the __monitoring infrastructure__. This proven to be instrumental on exposing the quality, behavior and performance of data processing activities in general and database interactions in particular. Unfortunately, in the same time, the deployments suffer because of the limited monitoring scope and the negative impact on scalability and performance of the subjected system, especially in the productive environments.
 
-There is also important to distinguish the on-demand nature of classic _Simulation Data Management monitoring infrastructure_ and the fact that a given application will communicate any of the monitoring details only in case of active interest of profiling explicit use-cases or application areas. While still a powerful instrument, this approach lacks the proactiveness of continuously monitoring chosen aspects of a given application feature and act promptly, ideally fully automated, on observed behavior alterations.
+There is also important to distinguish the _reactive, after the fact_ nature of the classic _Simulation Data Management profiling_. Typically monitoring is instrumented on a secondary / test system mirroring as much as possible the productive environment with the declared hope to reproduce the faulty use-cases. This definitely proven not always to be possible. While still a powerful instrument, this approach lacks the proactiveness of continuously monitoring critical aspects of a given application feature and act promptly, ideally fully automated, on behavior changes.
 
 The _SART Framework_ choice on externalizing state in _log structures_ and the exclusive message driven approach to state transitions as well as data access presents itself as a huge opportunity to re-think ground-up system monitoring. Such capacity of a software system to expose knowledge of its internal states and behavior was identified and coined in the industry as _Observability_. 
 
@@ -862,6 +868,55 @@ or queried on-demand from the built-in conflict resolution projections, eg.
        conflictResolvedEvent -> LOGGER.info("Conflict found {}", conflictResolvedEvent)
     );
 ```
+SART transactions provide also a built-in extensible audit mechanism. This is extremely useful when observing and/or debugging the deployed applications. Like with all other SART commands, once specific transaction details are attached, an event of type `TransactionDetailsAttachedEvent` is published to the transaction log. Details can be either attached explicitly by using the transaction API:
+
+```java
+driver.createDomainTransaction()
+        
+    .onDetailsAttached(detailsAttachedEvent -> {
+        ...
+     })
+
+    .attachTransactionDetails(TraceDetail.START_TRACE, new TraceDetailFactory())
+
+    .executeCommand(() -> {     
+        ...
+     });
+```
+or enabled globally at the driver level by invoking the `registerDetailFactory(DetailFactory<T>  detailFactory)` method on `RestTransactionDriver`. All configured categories of details will be attached to the transactions created by respective driver instance:
+
+```java
+TransactionDriver driver = new DefaultRestTransactionDriver()
+    .registerTransactionApi(new RestTransactionApi())
+    .registerQueryApi(new RestConflictQueryApi())
+    .registerCommandApi(new RestSimulationApi())
+    .registerDetailFactory(new TraceDetailFactory())
+    .init();
+    
+driver.createDomainTransaction()
+...
+```
+At the time when writing current lines only one attachment factory and detail category is supplied with SART, that is `TraceDetailFactory` respectively `TraceDetail` which provide runtime execution information associated with the origin of the respective transaction.
+
+```java
+class TraceDetail extends AbstractDetail {
+
+    String hostName;
+    
+    String hostAddress;
+    
+    String className;
+    
+    String methodName;
+    
+    int lineNumber;
+    
+    StackTraceElement[] stackTrace;
+}
+```
+An interesting display of the enhanced SART monitoring capabilities is prototyped as a simple javascript routine subscribing to the real-time event stream published by the reactive REST-ful transaction API. The graphics are generated with the [plotly.js](https://plot.ly/javascript/) library. The content is accessible as a [simple HTML page](http://localhost:8080/sart.html) available as resource to the transaction kernel.
+
+![Transaction Monitor](img/sart-monitor.png)  
 
 
 ## Functional Evolution

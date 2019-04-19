@@ -21,7 +21,6 @@ import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.projection.EntityIdentity;
 import org.sartframework.projection.kafka.query.KafkaDomainProjection;
 import org.sartframework.projection.kafka.query.KafkaDomainQueryResultsEmitter;
-import org.sartframework.query.AbstractQuery;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.query.QueryResultsEmitter;
 import org.sartframework.result.QueryResult;

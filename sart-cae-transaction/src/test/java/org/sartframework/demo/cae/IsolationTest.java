@@ -17,6 +17,7 @@ import org.sartframework.driver.DomainTransaction;
 import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.DefaultRestTransactionDriver;
 import org.sartframework.driver.TransactionDriver;
+import org.sartframework.transaction.TraceDetailFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Assert;
@@ -29,7 +30,7 @@ public class IsolationTest extends AbstractCaeTest {
     public void testReadSnapshotIsolationNotFound() {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         String j = nextInputDeckIdentity();
 
@@ -85,7 +86,7 @@ public class IsolationTest extends AbstractCaeTest {
     @Test
     public void testReadCommitedIsolationNotFound() {
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         String j = nextInputDeckIdentity();
 
@@ -141,7 +142,7 @@ public class IsolationTest extends AbstractCaeTest {
     @Test
     public void testReadUncommitedIsolationFound() {
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         String j = nextInputDeckIdentity();
 
@@ -197,7 +198,7 @@ public class IsolationTest extends AbstractCaeTest {
     public void testReadSnapshotIsolationFound() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 
@@ -227,7 +228,7 @@ public class IsolationTest extends AbstractCaeTest {
     public void testReadCommittedIsolationFound() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

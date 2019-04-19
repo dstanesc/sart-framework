@@ -116,7 +116,7 @@ public class SerializationTest {
         Assert.assertEquals("Version compare", cmd1.getAggregateVersion(), cmd2.getAggregateVersion());
     }
     
-    @SuppressWarnings("resource")
+    @SuppressWarnings({ "resource", "rawtypes" })
     //@Test
     public void test3() {
         ProtoSerializer<GenericCreateAggregateCommand<?>> ser = new ProtoSerializer<GenericCreateAggregateCommand<?>>();

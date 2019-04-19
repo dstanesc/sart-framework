@@ -17,13 +17,10 @@ import org.sartframework.demo.cae.query.InputDeckByNameQuery;
 import org.sartframework.demo.cae.result.InputDeckQueryResult;
 import org.sartframework.driver.DefaultRestTransactionDriver;
 import org.sartframework.driver.DomainTransaction;
-import org.sartframework.driver.RestConflictQueryApi;
 import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.TransactionDriver;
-import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
-import org.sartframework.query.ConflictsByAggregateQuery;
-import org.sartframework.result.ConflictResolvedResult;
+import org.sartframework.transaction.TraceDetailFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +97,7 @@ public class IncrementalTest {
     public void testQueryInputDeckProjectionSyntax2() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
         CompletableFuture<TransactionCompletedEvent> completeLock = new CompletableFuture<>();
@@ -140,7 +137,7 @@ public class IncrementalTest {
     public void testInputDeckPerformanceMonitor() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

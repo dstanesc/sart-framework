@@ -1,8 +1,5 @@
 package org.sartframework.transaction;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import javax.persistence.Id;
 
 import org.sartframework.aggregate.TransactionAggregate;

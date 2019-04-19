@@ -46,6 +46,7 @@ public class VersionedStructureScanner<T> {
         this.filteredType = filteredType;
     }
 
+    @SuppressWarnings("unchecked")
     public void scanAndRegister(String basePackage, PlatformOperationRegistry serializerRegistry) {
 
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);

@@ -7,11 +7,11 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TraceDetailFactory {
+public class TraceDetailFactory implements DetailFactory<TraceDetail>{
 
     final static Logger LOGGER = LoggerFactory.getLogger(TraceDetailFactory.class);
 
-    public static TraceDetail collect(String name) {
+    public TraceDetail collect(String name) {
 
         StackTraceElement[] stackTrace = new Throwable().getStackTrace();
 
@@ -46,15 +46,15 @@ public class TraceDetailFactory {
         return execDetail;
     }
 
-    private static StackTraceElement findRelevantTraceElement(StackTraceElement[] stackTrace) {
+    private StackTraceElement findRelevantTraceElement(StackTraceElement[] stackTrace) {
 
         //FIXME elaborate robust solution
         
-        StackTraceElement secondElement = stackTrace[2];
+        StackTraceElement secondElement = stackTrace[3];
 
         if (secondElement.getClassName().equals("org.sartframework.driver.DefaultDomainTransaction")) {
 
-            return stackTrace[5];
+            return stackTrace[8];
 
         } else
             return secondElement;

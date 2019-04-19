@@ -508,13 +508,17 @@
 
 				let statusX = txn.getStatus();
 
-				let traceX = txn.getAttachedDetailsText();
+				//let traceX = txn.getAttachedDetailsText();
+				
+				let eventCountX = txn.getEventCount();
+				
+				let durationX = txn.getDurationMillis();
 
 				Plotly.relayout('chartDetail', {
 
 					title : {
 
-						text : 'XID ' + xid + " - " + statusX,
+						text : 'XID ' + xid + " - " + statusX + ", Event Count - "+ eventCountX + ", Duration - " + durationX + " ms",
 
 						font : {
 

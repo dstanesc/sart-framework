@@ -20,6 +20,7 @@ import org.sartframework.driver.DefaultRestTransactionDriver;
 import org.sartframework.driver.DomainTransaction;
 import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.TransactionDriver;
+import org.sartframework.transaction.TraceDetailFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ public class WorkflowTest extends AbstractCaeTest {
     public void testWorkflowSingleTransaction() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         DomainTransaction domainTransaction = driver.createDomainTransaction();
 
@@ -84,6 +85,7 @@ public class WorkflowTest extends AbstractCaeTest {
                 return new InputDeckCreateCommand(j, "input-deck-name-" + j, "input-deck-file-" + j);
             });
 
+        @SuppressWarnings("unused")
         InputDeckResultAddedEvent atomicEvent = progressLock.get(20, TimeUnit.SECONDS);
 
         TestStatus status = completionLock.get(20, TimeUnit.SECONDS);
@@ -120,7 +122,7 @@ public class WorkflowTest extends AbstractCaeTest {
     public void testWorkflowMultipleTransactions() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         CompletableFuture<TestStatus> completionLock = new CompletableFuture<>();
 
@@ -162,6 +164,7 @@ public class WorkflowTest extends AbstractCaeTest {
                 return new InputDeckCreateCommand(j, "input-deck-name-" + j, "input-deck-file-" + j);
             });
 
+        @SuppressWarnings("unused")
         InputDeckResultAddedEvent atomicEvent = progressLock.get(20, TimeUnit.SECONDS);
 
         TestStatus status = completionLock.get(20, TimeUnit.SECONDS);
@@ -177,7 +180,7 @@ public class WorkflowTest extends AbstractCaeTest {
         CompletableFuture<InputDeckResultAddedEvent> progressLock = new CompletableFuture<>();
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         String resultId = nextResultIdentity();
 

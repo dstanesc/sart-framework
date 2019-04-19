@@ -20,6 +20,7 @@ import org.sartframework.driver.DomainTransaction;
 import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.DefaultRestTransactionDriver;
 import org.sartframework.driver.TransactionDriver;
+import org.sartframework.transaction.TraceDetailFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +62,7 @@ public class ScalabilityTest extends AbstractCaeTest {
     protected void createAndQuery(int count) throws InterruptedException, ExecutionException, TimeoutException {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestInputDeckQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
         CompletableFuture<InputDeckQueryResult> queryLock = new CompletableFuture<>();
 

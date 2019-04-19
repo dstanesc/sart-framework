@@ -19,5 +19,6 @@ public @interface Evolvable {
     
     String identity() default "";
     
+    @SuppressWarnings("rawtypes")
     Class<? extends ContentSerializer> serializer() default UnspecifiedContentSerializer.class;
 }

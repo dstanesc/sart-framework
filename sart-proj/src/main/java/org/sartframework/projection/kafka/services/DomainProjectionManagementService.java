@@ -13,7 +13,6 @@ import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.kafka.serializers.serde.SartSerdes;
 import org.sartframework.projection.kafka.query.KafkaDomainProjection;
 import org.sartframework.query.DomainQuery;
-import org.sartframework.result.EmptyResult;
 import org.sartframework.service.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

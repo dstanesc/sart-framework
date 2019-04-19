@@ -45,6 +45,7 @@ public class ProtoSerializer<T> implements Serializer<T>, Deserializer<T> {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public byte[] serialize(String topic, T data) {
 

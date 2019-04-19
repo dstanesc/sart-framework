@@ -15,6 +15,7 @@ import org.sartframework.driver.DomainTransaction;
 import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.DefaultRestTransactionDriver;
 import org.sartframework.driver.TransactionDriver;
+import org.sartframework.transaction.TraceDetailFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,7 @@ public class VersionTest extends AbstractCaeTest {
             .registerTransactionApi(new RestTransactionApi())
             .registerQueryApi(new RestInputDeckQueryApi())
             .registerCommandApi(new RestSimulationApi())
-            .attachTraces()
+            .registerDetailFactory(new TraceDetailFactory())
             .init();
 
         String inputDeckId = nextInputDeckIdentity();

@@ -14,6 +14,7 @@ import org.sartframework.driver.RestConflictQueryApi;
 import org.sartframework.driver.RestTransactionApi;
 import org.sartframework.driver.DefaultRestTransactionDriver;
 import org.sartframework.driver.TransactionDriver;
+import org.sartframework.transaction.TraceDetailFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class DurationTest extends AbstractCaeTest {
     public void testInputDeckPerformanceMonitor() throws Exception {
 
         TransactionDriver driver = new DefaultRestTransactionDriver().registerTransactionApi(new RestTransactionApi())
-            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).attachTraces().init();
+            .registerQueryApi(new RestConflictQueryApi()).registerCommandApi(new RestSimulationApi()).registerDetailFactory(new TraceDetailFactory()).init();
 
 
         CompletableFuture<Long> startLock = new CompletableFuture<>();
