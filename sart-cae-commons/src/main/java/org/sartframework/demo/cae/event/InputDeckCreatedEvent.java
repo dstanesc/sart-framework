@@ -3,8 +3,9 @@ package org.sartframework.demo.cae.event;
 import org.sartframework.annotation.Evolvable;
 import org.sartframework.demo.cae.command.InputDeckDeleteCommand;
 import org.sartframework.event.GenericAggregateCreatedEvent;
+import org.sartframework.serializers.protostuff.ContentSerializerProtostuff;
 
-@Evolvable(identity="cae.event.InputDeckCreated", version = 1)
+@Evolvable(identity = "cae.event.InputDeckCreated", version = 1, serializer = ContentSerializerProtostuff.class)
 public class InputDeckCreatedEvent extends GenericAggregateCreatedEvent<InputDeckDeleteCommand> {
 
     String inputDeckName;
@@ -42,7 +43,7 @@ public class InputDeckCreatedEvent extends GenericAggregateCreatedEvent<InputDec
     public InputDeckDeleteCommand undo(long xid, long xcs) {
 
         // inverse of create is delete
-        
+
         return new InputDeckDeleteCommand(getAggregateKey(), getSourceAggregateVersion()).addTransactionHeader(xid, xcs);
     }
 
@@ -51,5 +52,5 @@ public class InputDeckCreatedEvent extends GenericAggregateCreatedEvent<InputDec
 
         return getAggregateKey().toString();
     }
-    
+
 }

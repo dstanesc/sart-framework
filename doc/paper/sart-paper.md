@@ -894,19 +894,19 @@ __D. The deserialization platform__ can __fill missing values__ when mandatory n
 
 A system with all above prerequisites met can guarantee the compatibility between the software component and their underlying logged structures, eg. between evolving _Domain Commands_ or _Domain Events_ and corresponding _Domain Views_ or clients.
 
-Therefore __versioning__ and __serialization__ aspects of all domain specific artifacts (ie. _Domain Commands_, _Domain Events_, _Domain Queries_, _Domain Results_ and _Domain Aggregates_) are first class descriptors and actually mandatory when implementing any SART based system. __Versioning, identity and serialization mechanism__ is specified via the `@Evolvable` annotation. For instance:
+Therefore __versioning__ and __serialization__ aspects of all domain specific artifacts (ie. _Domain Commands_, _Domain Events_, _Domain Queries_, _Domain Results_ and _Domain Aggregates_) are first class descriptors and actually mandatory when implementing any SART based system. __Versioning, identity and serialization mechanism__ are specified with the help of the `@Evolvable` annotation. That is:
 
 
 ```java
-@Evolvable(identity="cae.event.InputDeckCreated", version = 1)
+@Evolvable(identity="cae.event.InputDeckCreated", version=1, serializer=ContentSerializerProtostuff.class)
 class InputDeckCreatedEvent extends GenericAggregateCreatedEvent<InputDeckDeleteCommand> {
     //...
 }
 ```
 where
 
-* __Unspecified identity__ defaults to the __unqualified name of the java class__, hence subsequent class versions would have to preserve the class name and provide an alternate namespace / package, evtl. encoding the version number
-* __Unspecified serializer__ defaults to __platform default content serializer/deserializer__
+* Unspecified __identity__ defaults to the __unqualified name of the java class__, hence subsequent class versions would have to preserve the class name and provide an alternate namespace / package. In this case the package name can, for readability, include the version number but be aware that only the annotation attribute dictates the actual version.
+* Unspecified __serializer__ defaults to __platform default content serializer/deserializer__ (registered with `PlatformOperationRegistry#registerDefaultContentSerializer(..)`
 
 ```java
 @Documented
