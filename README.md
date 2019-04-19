@@ -1,56 +1,59 @@
 ## Quick Start
 
+#### Install Kafka
 
-#### Install SART
 ```bash
-git clone https://github.com/dstanesc/sart-framework.git
-```
+mkdir ~/kafka && cd ~/kafka
 
-#### Start Zookeeper
-```bash
-bin/zookeeper-server-start.sh config/zookeeper.properties
+curl "http://www.apache.org/dist/kafka/2.2.0/kafka_2.11-2.2.0.tgz" -o ~/kafka/kafka.tgz
+
+tar xvzf ~/kafka/kafka.tgz --strip 1
 ```
 
 #### Start Kafka
 ```bash
+bin/zookeeper-server-start.sh config/zookeeper.properties
+```
+
+```bash
 bin/kafka-server-start.sh config/server.properties
 ```
 
-#### Start Demo
+#### Install SART
+```bash
+mkdir ~/sart && cd ~/sart
 
-##### Start Services
+git clone https://github.com/dstanesc/sart-framework.git
+```
 
-Terminal 1
+##### SART CAE Services
 
 ```bash
 ./gradlew :sart-cae-transaction:bootRun
 
 ```
 
-Terminal 2
-
 ```bash
 ./gradlew :sart-cae-proj:bootRun
 
 ```
-Terminal 3
 
 ```bash
 ./gradlew :sart-cae-conflict:bootRun
 ```
 
-##### Monitor Dashboard
+##### SART Monitor Dashboard
 
 ```bash
 http://localhost:8080/sart.html
 ```
 
-##### Execute Tests
+##### SART Tests
 ```bash
 ./gradlew :sart-cae-transaction:test --tests org.sartframework.demo.cae.ValidationSuite  
 ```
 
-## Documentation
+## More Documentation
 
 A paper on SART framework motivation and architecture can be found in the [doc/paper](doc/paper/sart-paper.md) folder.
 
