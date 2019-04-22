@@ -45,7 +45,7 @@ git clone https://github.com/dstanesc/sart-framework.git
 ##### SART Monitor Dashboard
 
 ```bash
-http://localhost:8080/sart.html
+http://localhost:8083/sart.html
 ```
 
 ##### SART Tests
