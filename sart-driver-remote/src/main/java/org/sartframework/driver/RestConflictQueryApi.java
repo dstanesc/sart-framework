@@ -11,7 +11,7 @@ public class RestConflictQueryApi extends RestRemoteApi {
 
     public RestConflictQueryApi() {
         super();
-        setServerPort(8081);
+        setServerPort(8084);
         registerQuerySupport(ConflictsByAggregateQuery.class, new RequestMapping(RequestMethod.POST, "/query/conflicts/aggregate"));
         registerQuerySupport(ConflictsByChangeQuery.class, new RequestMapping(RequestMethod.POST, "/query/conflicts/change"));
         registerQuerySupport(ConflictsByXidQuery.class, new RequestMapping(RequestMethod.POST, "/query/conflicts/xid"));

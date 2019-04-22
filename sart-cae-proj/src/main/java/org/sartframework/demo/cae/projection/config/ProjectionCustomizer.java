@@ -20,7 +20,7 @@ public class ProjectionCustomizer implements WebServerFactoryCustomizer<NettyRea
     @Override
     public void customize(NettyReactiveWebServerFactory factory) {
         
-        factory.setPort(8082); // get it from config ?
+        factory.setPort(8085); // get it from config ?
     }
 
 }

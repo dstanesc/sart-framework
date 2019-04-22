@@ -12,7 +12,7 @@ public abstract class RestRemoteApi implements RestReadWriteApi {
 
     String serverName = "localhost";
 
-    Integer serverPort = 8080;
+    Integer serverPort = 8083;
 
     Map<Class<? extends DomainQuery>, RequestMapping> supportedQueries = new HashMap<>();
 

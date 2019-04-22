@@ -11,7 +11,7 @@ public class RestInputDeckQueryApi extends RestRemoteApi {
 
     public RestInputDeckQueryApi() {
         super();
-        setServerPort(8082);
+        setServerPort(8085);
         registerQuerySupport(InputDeckByXidQuery.class, new RequestMapping(RequestMethod.POST, "/query/inputDeck/xid"));
         registerQuerySupport(InputDeckByIdQuery.class, new RequestMapping(RequestMethod.POST, "/query/inputDeck/id"));
         registerQuerySupport(InputDeckByNameQuery.class, new RequestMapping(RequestMethod.POST, "/query/inputDeck/name"));
