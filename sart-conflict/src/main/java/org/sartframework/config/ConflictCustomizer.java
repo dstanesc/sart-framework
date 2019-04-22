@@ -21,7 +21,7 @@ public class ConflictCustomizer implements WebServerFactoryCustomizer<NettyReact
     @Override
     public void customize(NettyReactiveWebServerFactory factory) {
         
-        factory.setPort(sartConfiguration.getConflictListener().getPort());
+        factory.setPort(sartConfiguration.getViewListener().getPort());
     }
 
 }

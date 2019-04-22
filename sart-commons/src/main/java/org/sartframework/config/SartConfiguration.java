@@ -13,18 +13,18 @@ public class SartConfiguration {
     public static class Projections {
 
         @NotNull
-        Conflict conflict;
+        View view;
 
-        public Conflict getConflict() {
-            return conflict;
+        public View getView() {
+            return view;
         }
 
-        public void setConflict(Conflict conflict) {
-            this.conflict = conflict;
+        public void setView(View conflict) {
+            this.view = conflict;
         }
     }
 
-    public static class Conflict {
+    public static class View {
 
         @NotNull
         Listener listener;
@@ -111,9 +111,9 @@ public class SartConfiguration {
         this.projections = projections;
     }
 
-    public Listener getConflictListener() {
+    public Listener getViewListener() {
 
-        return projections.getConflict().getListener();
+        return projections.getView().getListener();
     }
 
     public Transaction getTransaction() {
