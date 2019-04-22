@@ -22,3 +22,13 @@ jar {
 	baseName = "sart-driver-local"
 	version = "$sartVersion"
 }
+
+publishing {
+   publications {
+      sartJava(MavenPublication) {
+          from components.java
+          artifactId = "sart-driver-local"
+          version = "$sartVersion"
+      }
+   }
+}

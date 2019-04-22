@@ -30,3 +30,13 @@ jar {
 	baseName = "sart-transaction"
 	version = "$sartVersion"
 }
+
+publishing {
+   publications {
+      sartJava(MavenPublication) {
+          from components.java
+          artifactId = "sart-transaction"
+          version = "$sartVersion"
+      }
+   }
+}

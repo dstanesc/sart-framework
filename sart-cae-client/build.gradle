@@ -7,7 +7,6 @@ dependencies {
         implementation project(":sart-commons") 
         implementation project(":sart-driver-remote")
         implementation project(":sart-driver-local")
-        //implementation project(":sart-transaction")
         implementation project(":sart-cae-commons")
         
 
@@ -27,6 +26,6 @@ dependencies {
 
 jar {
 
-	baseName = "sart-cae"
-	version = "$sartVersion"
+	archiveBaseName = "sart-cae-client"
+	archiveVersion = "$sartVersion"
 }

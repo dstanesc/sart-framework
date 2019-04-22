@@ -17,3 +17,13 @@ jar {
 	baseName = "sart-proj"
 	version = "$sartVersion"
 }
+
+publishing {
+   publications {
+      sartJava(MavenPublication) {
+          from components.java
+          artifactId = "sart-proj"
+          version = "$sartVersion"
+      }
+   }
+}

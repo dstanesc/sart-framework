@@ -21,3 +21,13 @@ jar {
 	baseName = "sart-commons"
 	version = "$sartVersion"
 }
+
+publishing {
+   publications {
+      sartJava(MavenPublication) {
+          from components.java
+          artifactId = "sart-commons"
+          version = "$sartVersion"
+      }
+   }
+}

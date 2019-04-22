@@ -19,3 +19,13 @@ jar {
 	baseName = "sart-driver-remote"
 	version = "$sartVersion"
 }
+
+publishing {
+   publications {
+      sartJava(MavenPublication) {
+          from components.java
+          artifactId = "sart-driver-remote"
+          version = "$sartVersion"
+      }
+   }
+}
