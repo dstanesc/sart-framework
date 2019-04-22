@@ -253,7 +253,7 @@ public class SartKafkaConfiguration {
         // Enable record cache of size 10 MB.
         kafkaConfig.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 10 * 1024 * 1024L);
         // Set commit interval to 1 second.
-        kafkaConfig.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 500);
+        kafkaConfig.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10);
 
         // exactly once delivering guarantees, default is
         // StreamsConfig.AT_LEAST_ONCE
