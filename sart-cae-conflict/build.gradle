@@ -21,7 +21,11 @@ dependencies {
 
 
 jar {
-
+    enabled = true
 	archiveBaseName = "sart-cae-conflict"
 	archiveVersion = "$sartVersion"
+}
+
+bootJar {
+	classifier = 'boot'
 }

@@ -2,6 +2,7 @@ apply plugin: 'org.springframework.boot'
 
 group = 'org.sartframework'
 
+
 dependencies {
    
         implementation project(":sart-commons") 
@@ -32,7 +33,14 @@ dependencies {
 
 
 jar {
-
+    enabled = true
 	archiveBaseName = "sart-cae-transaction"
 	archiveVersion = "$sartVersion"
 }
+
+
+bootJar {
+	classifier = 'boot'
+}
+
+

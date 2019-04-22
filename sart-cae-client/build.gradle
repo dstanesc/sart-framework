@@ -25,7 +25,11 @@ dependencies {
 
 
 jar {
-
+    enabled = true
 	archiveBaseName = "sart-cae-client"
 	archiveVersion = "$sartVersion"
+}
+
+bootJar {
+	classifier = 'boot'
 }
