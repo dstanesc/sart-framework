@@ -27,8 +27,8 @@ dependencies {
 
 jar {
 
-	baseName = "sart-transaction"
-	version = "$sartVersion"
+	archiveBaseName = "sart-transaction"
+	archiveVersion = "$sartVersion"
 }
 
 publishing {

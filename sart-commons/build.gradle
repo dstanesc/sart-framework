@@ -18,8 +18,8 @@ dependencies {
 
 
 jar {
-	baseName = "sart-commons"
-	version = "$sartVersion"
+	archiveBaseName = "sart-commons"
+	archiveVersion = "$sartVersion"
 }
 
 publishing {

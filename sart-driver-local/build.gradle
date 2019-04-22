@@ -19,8 +19,8 @@ dependencies {
 
 jar {
 
-	baseName = "sart-driver-local"
-	version = "$sartVersion"
+	archiveBaseName = "sart-driver-local"
+	archiveVersion = "$sartVersion"
 }
 
 publishing {

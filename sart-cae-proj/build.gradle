@@ -24,6 +24,6 @@ dependencies {
 
 jar {
 
-	baseName = "sart-cae-kafka"
-	version = "$sartVersion"
+	archiveBaseName = "sart-cae-proj"
+	archiveVersion = "$sartVersion"
 }

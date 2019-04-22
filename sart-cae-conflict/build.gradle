@@ -22,6 +22,6 @@ dependencies {
 
 jar {
 
-	baseName = "sart-cae-conflict"
-	version = "$sartVersion"
+	archiveBaseName = "sart-cae-conflict"
+	archiveVersion = "$sartVersion"
 }

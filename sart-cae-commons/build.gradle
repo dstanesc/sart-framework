@@ -11,6 +11,6 @@ dependencies {
 
 jar {
 
-	baseName = "sart-cae-commons"
-	version = "$sartVersion"
+	archiveBaseName = "sart-cae-commons"
+	archiveVersion = "$sartVersion"
 }

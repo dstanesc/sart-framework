@@ -16,8 +16,8 @@ dependencies {
 
 jar {
 
-	baseName = "sart-driver-remote"
-	version = "$sartVersion"
+	archiveBaseName = "sart-driver-remote"
+	archiveVersion = "$sartVersion"
 }
 
 publishing {

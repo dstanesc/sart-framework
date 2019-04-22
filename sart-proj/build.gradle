@@ -14,8 +14,8 @@ dependencies {
 
 jar {
 
-	baseName = "sart-proj"
-	version = "$sartVersion"
+	archiveBaseName = "sart-proj"
+	archiveVersion = "$sartVersion"
 }
 
 publishing {
