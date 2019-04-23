@@ -24,6 +24,7 @@ publishing {
    publications {
       sartJava(MavenPublication) {
           from components.java
+          artifact sourcesJar
           artifactId = "sart-driver-remote"
           version = "$sartVersion"
       }

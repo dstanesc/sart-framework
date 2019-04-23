@@ -46,6 +46,16 @@ subprojects {
         exclude group: "org.slf4j", module: "slf4j-log4j12"
         exclude group: "log4j", module: "log4j"
     }
+    
+    task sourcesJar(type: Jar, dependsOn: classes) {
+	    from sourceSets.main.allJava
+	    version = "$sartVersion"
+	    archiveClassifier = 'sources'
+    }
+    
+    artifacts {
+	   archives sourcesJar
+    }
 }
 
 
