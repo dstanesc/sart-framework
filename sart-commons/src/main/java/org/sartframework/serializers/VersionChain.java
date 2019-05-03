@@ -13,6 +13,9 @@ public class VersionChain<T> {
 
     public void add(EvolvableStructure<T> versionedStructure) {
         
+        if(chain.containsKey(versionedStructure.getVersion()))
+            throw new DuplicateEvolvableSpecification(versionedStructure.getVersion(), versionedStructure.getIdentity());
+        
         chain.put(versionedStructure.getVersion(), versionedStructure);
     }
     
