@@ -327,9 +327,9 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
         return aggregateVersion;
     }
 
-    protected void publish(long xid, long xcs, DomainEvent<? extends DomainCommand> domainEvent) {
+    protected void dispatch(DomainEvent<? extends DomainCommand> domainEvent) {
 
-        LOGGER.info("dispatch events xid={}, xcs={}, domainEvent={}", xid, xcs, domainEvent);
+        LOGGER.info("dispatch events xid={}, xcs={}, domainEvent={}", domainEvent.getXid(), domainEvent.getXcs(), domainEvent);
 
         try {
 
@@ -339,7 +339,7 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
 
             publish(domainEvent);
 
-            publish(new LogProgressCommand(xid, xcs, domainEvent));
+            publish(new LogProgressCommand( domainEvent.getXid(), domainEvent.getXcs(), domainEvent));
 
         } catch (HandlerNotFound e) {
 

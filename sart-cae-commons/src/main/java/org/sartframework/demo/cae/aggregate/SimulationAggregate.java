@@ -67,7 +67,7 @@ public class SimulationAggregate extends AnnotatedDomainAggregate {
             DomainEvent<? extends DomainCommand> inputDeckCreated = new InputDeckCreatedEvent(c.getAggregateKey(), c.getInputDeckName(),
                 c.getInputDeckFile()).addTransactionHeader(xid, xcs);
 
-            publish(xid, xcs, inputDeckCreated);
+            dispatch(inputDeckCreated);
 
         } else {
 
@@ -93,7 +93,7 @@ public class SimulationAggregate extends AnnotatedDomainAggregate {
         DomainEvent<? extends DomainCommand> fileUpdated = new InputDeckFileUpdatedEvent(c.getAggregateKey(), c.getAggregateVersion(),
             c.getInputDeckFile(), getInputDeckFile()).addTransactionHeader(xid, xcs);
 
-        publish(xid, xcs, fileUpdated);
+        dispatch(fileUpdated);
     }
 
 
@@ -109,7 +109,7 @@ public class SimulationAggregate extends AnnotatedDomainAggregate {
         DomainEvent<? extends DomainCommand> resultAdded = new InputDeckResultAddedEvent(c.getAggregateKey(), sourceAggregateVersion, c.getResultId(),
             c.getResultName(), c.getResultFile()).addTransactionHeader(xid, xcs);
 
-        publish(xid, xcs, resultAdded);
+        dispatch(resultAdded);
     }
 
 
@@ -126,7 +126,7 @@ public class SimulationAggregate extends AnnotatedDomainAggregate {
         DomainEvent<? extends DomainCommand> resultRemoved = new InputDeckResultRemovedEvent(c.getAggregateKey(), sourceAggregateVersion,
             c.getResultId()).addTransactionHeader(xid, xcs);
 
-        publish(xid, xcs, resultRemoved);
+        dispatch(resultRemoved);
     }
 
     
@@ -139,7 +139,7 @@ public class SimulationAggregate extends AnnotatedDomainAggregate {
 
         DomainEvent<? extends DomainCommand>  inputDeckDeletedEvent = new InputDeckDeletedEvent(c.getAggregateKey(), c.getAggregateVersion()).addTransactionHeader(xid, xcs);
         
-        publish(xid, xcs, inputDeckDeletedEvent);
+        dispatch(inputDeckDeletedEvent);
     }
 
     @DomainCommandHandler

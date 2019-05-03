@@ -4,6 +4,10 @@ public class DestructibleEntity {
 
     protected Long xmax;
 
+    public void destruct(Long xmax) {
+        setXmax(xmax);
+    }
+    
     public Long getXmax() {
         return xmax;
     }
