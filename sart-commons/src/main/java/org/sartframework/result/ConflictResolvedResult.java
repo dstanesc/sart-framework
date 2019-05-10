@@ -1,10 +1,10 @@
 package org.sartframework.result;
 
 import org.sartframework.annotation.Evolvable;
-import org.sartframework.event.transaction.ConflictResolvedEvent;
+import org.sartframework.event.transaction.ConflictResolvedData;
 
 @Evolvable(version = 1)
-public class ConflictResolvedResult extends ConflictResolvedEvent implements QueryResult {
+public class ConflictResolvedResult implements QueryResult {
     
     String sid;
 
@@ -12,13 +12,14 @@ public class ConflictResolvedResult extends ConflictResolvedEvent implements Que
 
     long resultCreationTime;
     
+    ConflictResolvedData data;
+    
     public ConflictResolvedResult() {
         super();
     }
 
-    public ConflictResolvedResult(String sid, String resultKey, long xid, String aggregateKey, String changeKey, long winnerVersion, long otherVersion, long winnerXid,
-                                  long otherXid, String winnerEvent, String otherEvent) {
-        super(xid, aggregateKey, changeKey, winnerVersion, otherVersion, winnerXid, otherXid, winnerEvent, otherEvent);
+    public ConflictResolvedResult(String sid, String resultKey,  ConflictResolvedData data) {
+        this.data = data;
         this.sid = sid;
         this.queryKey = resultKey;
         this.resultCreationTime = System.currentTimeMillis();
@@ -49,6 +50,14 @@ public class ConflictResolvedResult extends ConflictResolvedEvent implements Que
 
     public void setResultCreationTime(long resultCreationTime) {
         this.resultCreationTime = resultCreationTime;
+    }
+
+    public ConflictResolvedData getData() {
+        return data;
+    }
+
+    public void setData(ConflictResolvedData data) {
+        this.data = data;
     }
 
 }

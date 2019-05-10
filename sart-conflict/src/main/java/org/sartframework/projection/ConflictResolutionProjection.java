@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.sartframework.annotation.DomainEventHandler;
 import org.sartframework.annotation.DomainQueryHandler;
 import org.sartframework.event.QueryEvent;
+import org.sartframework.event.transaction.ConflictResolvedData;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.kafka.channels.KafkaWriters;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
@@ -55,26 +56,26 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection <Co
 
     @DomainEventHandler
     public void on(ConflictResolvedEvent e) {
-
-        LOGGER.info("Conflict resolved event received for {}, persisting={}", e.getAggregateKey(), e.getXid() == e.getOtherXid());
+        
+        ConflictResolvedData d = e.getData();
+        
+        LOGGER.info("Conflict resolved event received for {}, persisting={}", d.getAggregateKey(), e.getXid() == d.getOtherXid());
 
         // policy only loser persisted as ConflictResolutionEntity
-        if (e.getXid() == e.getOtherXid()) {
-            ConflictResolutionEntity conflictResolvedEntity = new ConflictResolutionEntity(e.getAggregateKey(), e.getChangeKey(),
-                e.getWinnerVersion(), e.getOtherVersion(), e.getWinnerXid(), e.getOtherXid(), e.getWinnerEvent(), e.getOtherEvent());
+        if (e.getXid() == d.getOtherXid()) {
+            
+            ConflictResolutionEntity conflictResolvedEntity = new ConflictResolutionEntity(d.getAggregateKey(), d.getChangeKey(),
+                d.getWinnerVersion(), d.getOtherVersion(), d.getWinnerXid(), d.getOtherXid(), d.getWinnerEvent(), d.getOtherEvent());
+            
             repository.saveAndFlush(conflictResolvedEntity);
 
-            ConflictResolvedResult result = new ConflictResolvedResult(kafkaStreamsConfiguration.getSid(), QueryResult.BROADCAST_RESULT_QUERY_KEY, e.getOtherXid(), e.getAggregateKey(),
-                e.getChangeKey(), e.getWinnerVersion(), e.getOtherVersion(), e.getWinnerXid(), e.getOtherXid(), e.getWinnerEvent(),
-                e.getOtherEvent());
+            ConflictResolvedResult result = new ConflictResolvedResult(kafkaStreamsConfiguration.getSid(), QueryResult.BROADCAST_RESULT_QUERY_KEY, d);
 
-            queryResultsEmitter.broadcast(ConflictsByAggregateQuery.class, query -> query.matches(result.getAggregateKey()), result);
-            queryResultsEmitter.broadcast(ConflictsByChangeQuery.class, query -> query.matches(result.getChangeKey()), result);
-            queryResultsEmitter.broadcast(ConflictsByXidQuery.class, query -> query.matches(result.getWinnerXid(), result.getOtherXid()), result);
+            queryResultsEmitter.broadcast(ConflictsByAggregateQuery.class, query -> query.matches(d.getAggregateKey()), result);
+            queryResultsEmitter.broadcast(ConflictsByChangeQuery.class, query -> query.matches(d.getChangeKey()), result);
+            queryResultsEmitter.broadcast(ConflictsByXidQuery.class, query -> query.matches(d.getWinnerXid(), d.getOtherXid()), result);
         }
     }
-
-    // https://stackoverflow.com/questions/4343202/difference-between-super-t-and-extends-t-in-java
 
     @DomainQueryHandler
     public List<? super QueryResult> findByAggregateKey(ConflictsByAggregateQuery q) {
@@ -104,9 +105,9 @@ public class ConflictResolutionProjection extends KafkaTransactionProjection <Co
         LOGGER.info("non-empty conflict result {}", entityList.size());
 
         List<? super QueryResult> resultList = entityList.stream()
-            .map(entity -> new ConflictResolvedResult(kafkaStreamsConfiguration.getSid(), query.getQueryKey(), entity.getOtherXid(), entity.getAggregateKey(), entity.getChangeKey(),
+            .map(entity -> new ConflictResolvedResult(kafkaStreamsConfiguration.getSid(), query.getQueryKey(), new ConflictResolvedData(entity.getOtherXid(), entity.getAggregateKey(), entity.getChangeKey(),
                 entity.getWinnerVersion(), entity.getOtherVersion(), entity.getWinnerXid(), entity.getOtherXid(), entity.getWinnerEvent(),
-                entity.getOtherEvent()))
+                entity.getOtherEvent())))
             .collect(Collectors.toList());
 
         if (!query.isQuerySubscription()) {

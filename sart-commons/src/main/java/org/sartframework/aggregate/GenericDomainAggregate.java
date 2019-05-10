@@ -21,6 +21,7 @@ import org.sartframework.event.AggregateFieldElementRemovedEvent;
 import org.sartframework.event.AggregateFieldIncrementedEvent;
 import org.sartframework.event.AggregateFieldUpdatedEvent;
 import org.sartframework.event.DomainEvent;
+import org.sartframework.event.transaction.ConflictResolvedData;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -289,14 +290,14 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
         }
 
         // it should be a command ?
-        ConflictResolvedEvent conflictResolvedEventLoser = new ConflictResolvedEvent(otherXid, aggregateKey, changeKey, winnerVersion, otherVersion,
+        ConflictResolvedData conflictResolvedEventLoser = new ConflictResolvedData(otherXid, aggregateKey, changeKey, winnerVersion, otherVersion,
             winnerXid, otherXid, winnerEvent, otherEvent);
 
-        ConflictResolvedEvent conflictResolvedEventWinner = new ConflictResolvedEvent(winnerXid, aggregateKey, changeKey, winnerVersion, otherVersion,
+        ConflictResolvedData conflictResolvedEventWinner = new ConflictResolvedData(winnerXid, aggregateKey, changeKey, winnerVersion, otherVersion,
             winnerXid, otherXid, winnerEvent, otherEvent);
 
-        publish(conflictResolvedEventLoser);
-        publish(conflictResolvedEventWinner);
+        publish(new ConflictResolvedEvent(conflictResolvedEventLoser));
+        publish(new ConflictResolvedEvent(conflictResolvedEventWinner));
     }
 
     private Long saveInternal(DomainEvent<?> domainEvent) {

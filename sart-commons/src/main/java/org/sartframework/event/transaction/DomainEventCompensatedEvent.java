@@ -3,11 +3,11 @@ package org.sartframework.event.transaction;
 import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.event.DomainEvent;
-import org.sartframework.event.GenericDomainEvent;
+import org.sartframework.event.GenericEvent;
 import org.sartframework.event.TransactionEvent;
 
 @Evolvable(version = 1)
-public class DomainEventCompensatedEvent extends GenericDomainEvent<DomainCommand> implements TransactionEvent {
+public class DomainEventCompensatedEvent extends GenericEvent implements TransactionEvent {
 
     DomainEvent<? extends DomainCommand> domainEvent;
     
@@ -18,8 +18,7 @@ public class DomainEventCompensatedEvent extends GenericDomainEvent<DomainComman
     }
 
     public DomainEventCompensatedEvent(long xid, long xcs, DomainEvent<? extends DomainCommand> domainEvent, boolean skip) {
-        super(domainEvent.getAggregateKey(), domainEvent.getSourceAggregateVersion());
-        addTransactionHeader(xid, xcs);
+        super(xid);
         this.domainEvent = domainEvent;
         this.skip = skip;
     }
@@ -38,18 +37,6 @@ public class DomainEventCompensatedEvent extends GenericDomainEvent<DomainComman
 
     public void setSkip(boolean skip) {
         this.skip = skip;
-    }
-
-    @Override
-    public DomainCommand undo(long xid, long xcs) {
-        
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getChangeKey() {
-        
-        throw new UnsupportedOperationException();
     }
 
 }

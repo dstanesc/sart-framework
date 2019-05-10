@@ -240,13 +240,13 @@ public abstract class GenericTransactionAggregate implements TransactionAggregat
 
         DomainEvent<? extends DomainCommand> domainEvent = compensatedEvent.getDomainEvent();
 
-        long xcs = compensatedEvent.getXcs();
+        long xcs = domainEvent.getXcs();
 
         LOGGER.info("Domain Event compensated received for {} xid={}, xcs={}", domainEvent, xid, xcs);
 
         if (xcs > 0) {
             DomainCommand reverseCommand = compensatedEvent.isSkip()
-                ? new DefaultVoidDomainCommand(compensatedEvent.getAggregateKey(), compensatedEvent.getSourceAggregateVersion())
+                ? new DefaultVoidDomainCommand(domainEvent.getAggregateKey(), domainEvent.getSourceAggregateVersion())
                     .addTransactionHeader(xid, -xcs)
                 : domainEvent.undo(xid, -xcs);
 

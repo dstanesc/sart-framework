@@ -189,7 +189,7 @@ public class TransactionTest extends AbstractCaeTest {
 
         ConflictResolvedEvent conflictResolved = conflictResolvedLock.get(10, TimeUnit.SECONDS);
 
-        long winnerXid = conflictResolved.getWinnerXid();
+        long winnerXid = conflictResolved.getData().getWinnerXid();
 
         LOGGER.info("Winner xid is {} ", winnerXid);
 
@@ -242,11 +242,11 @@ public class TransactionTest extends AbstractCaeTest {
 
         ConflictResolvedEvent conflictResolved = conflictResolvedLock.get(10, TimeUnit.SECONDS);
 
-        long winnerXid = conflictResolved.getWinnerXid();
+        long winnerXid = conflictResolved.getData().getWinnerXid();
 
         LOGGER.info("Winner xid is {} ", winnerXid);
-        LOGGER.info("Conflict aggregate is {} ", conflictResolved.getAggregateKey());
-        LOGGER.info("Conflict change key is {} ", conflictResolved.getChangeKey());
+        LOGGER.info("Conflict aggregate is {} ", conflictResolved.getData().getAggregateKey());
+        LOGGER.info("Conflict change key is {} ", conflictResolved.getData().getChangeKey());
 
         // verify LWW conflict resolution successful
         Assert.assertEquals(x2.getXid(), winnerXid);
@@ -562,7 +562,7 @@ public class TransactionTest extends AbstractCaeTest {
 
         x1.onStartQuery(true, new ConflictsByAggregateQuery(j), ConflictResolvedResult.class, e -> {
 
-            LOGGER.info("Found conflict for aggregate {} for change {}, xid={}, queryKey={} ", e.getAggregateKey(), e.getChangeKey(), e.getXid());
+            LOGGER.info("Found conflict for aggregate {} for change {}, xid={}, queryKey={} ", e.getData().getAggregateKey(), e.getData().getChangeKey(), e.getData().getXid());
 
             conflictQueryLock.complete(e);
 
@@ -588,22 +588,22 @@ public class TransactionTest extends AbstractCaeTest {
 
         ConflictResolvedEvent conflictResolved = conflictNotificationLock.get(10, TimeUnit.SECONDS);
 
-        long winnerXid = conflictResolved.getWinnerXid();
+        long winnerXid = conflictResolved.getData().getWinnerXid();
 
         LOGGER.info("Winner xid is {} ", winnerXid);
-        LOGGER.info("Conflict aggregate is {} ", conflictResolved.getAggregateKey());
-        LOGGER.info("Conflict change key is {} ", conflictResolved.getChangeKey());
+        LOGGER.info("Conflict aggregate is {} ", conflictResolved.getData().getAggregateKey());
+        LOGGER.info("Conflict change key is {} ", conflictResolved.getData().getChangeKey());
 
         // verify LWW conflict resolution successful
         Assert.assertEquals(x2.getXid(), winnerXid);
 
         ConflictResolvedResult queryResult = conflictQueryLock.get(10, TimeUnit.SECONDS);
 
-        Assert.assertEquals(queryResult.getWinnerXid(), conflictResolved.getWinnerXid());
+        Assert.assertEquals(queryResult.getData().getWinnerXid(), conflictResolved.getData().getWinnerXid());
 
-        Assert.assertEquals(queryResult.getAggregateKey(), conflictResolved.getAggregateKey());
+        Assert.assertEquals(queryResult.getData().getAggregateKey(), conflictResolved.getData().getAggregateKey());
 
-        Assert.assertEquals(queryResult.getChangeKey(), conflictResolved.getChangeKey());
+        Assert.assertEquals(queryResult.getData().getChangeKey(), conflictResolved.getData().getChangeKey());
     }
 
     @Test
