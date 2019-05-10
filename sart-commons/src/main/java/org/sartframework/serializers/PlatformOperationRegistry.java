@@ -23,6 +23,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class PlatformOperationRegistry {
 
+    private static final String ORG_SARTFRAMEWORK = "org.sartframework";
+
     final static Logger LOGGER = LoggerFactory.getLogger(PlatformOperationRegistry.class);
 
     public static PlatformOperationRegistry instance;
@@ -77,17 +79,25 @@ public class PlatformOperationRegistry {
         
         registerDefaultContentSerializer(ContentSerializerProtostuff.class);
 
-        registerOperationCategory(DomainAggregate.class, "org.sartframework");
-        registerOperationCategory(DomainCommand.class, "org.sartframework");
-        registerOperationCategory(DomainEvent.class, "org.sartframework");
-        registerOperationCategory(DomainQuery.class, "org.sartframework");
-        registerOperationCategory(QueryResult.class, "org.sartframework");
-        registerOperationCategory(QueryEvent.class, "org.sartframework");
-        registerOperationCategory(TransactionAggregate.class, "org.sartframework");
-        registerOperationCategory(TransactionCommand.class, "org.sartframework");
-        registerOperationCategory(TransactionEvent.class, "org.sartframework");
-        registerOperationCategory(RunningTransactions.class, "org.sartframework");
+        registerDefaultOperations(ORG_SARTFRAMEWORK);
+        
+        registerOperationCategory(RunningTransactions.class, ORG_SARTFRAMEWORK);
 
+        return this;
+    }
+
+    public PlatformOperationRegistry registerDefaultOperations(String packageName) {
+        
+        registerOperationCategory(DomainAggregate.class, packageName);
+        registerOperationCategory(DomainCommand.class, packageName);
+        registerOperationCategory(DomainEvent.class, packageName);
+        registerOperationCategory(DomainQuery.class, packageName);
+        registerOperationCategory(QueryResult.class, packageName);
+        registerOperationCategory(QueryEvent.class, packageName);
+        registerOperationCategory(TransactionAggregate.class, packageName);
+        registerOperationCategory(TransactionCommand.class, packageName);
+        registerOperationCategory(TransactionEvent.class, packageName);
+        
         return this;
     }
 

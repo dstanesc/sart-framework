@@ -1,8 +1,5 @@
 package org.sartframework.event.transaction;
 
-import org.sartframework.annotation.Evolvable;
-
-@Evolvable(version = 1)
 public class ConflictResolvedData {
 
     long xid;
