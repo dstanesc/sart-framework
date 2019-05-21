@@ -17,11 +17,11 @@ import org.sartframework.event.DomainEvent;
 import org.sartframework.event.EventDescriptor;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
-import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.ProgressLoggedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.kafka.serializers.serde.SartSerdes;
@@ -66,7 +66,7 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
     @Override
     public TransactionLifecycleMonitorService start() {
 
-        LOGGER.info("Starting transaction lifecycle monitor");
+        LOGGER.info("Starting transaction lifecycle monitor service");
 
         StreamsBuilder builder = new StreamsBuilder();
 
@@ -75,9 +75,10 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
 
         transactionEventStream.foreach((xid, event) -> {
 
-            if (hasSubscribedMonitors(xid)) {
-                //dispatchEvent(xid, event);
-                executor.submit(() -> dispatchEvent(xid, event));
+            TransactionMonitors transactionMonitors = getSubscribedMonitors(xid);
+
+            if (transactionMonitors != null) {
+                executor.submit(() -> dispatchEvent(transactionMonitors, event));
             }
         });
 
@@ -93,34 +94,32 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
         return this;
     }
 
-    protected void dispatchEvent(Long xid, TransactionEvent event) {
-        
-        TransactionMonitors transactionMonitors = getSubscribedMonitors(xid);
+    protected void dispatchEvent(TransactionMonitors transactionMonitors, TransactionEvent event) {
 
         if (event instanceof TransactionStartedEvent) {
             transactionMonitors.onNextStart((TransactionStartedEvent) event);
-            EventDescriptor eventDescriptor = describe(xid, -1L, event);
+            EventDescriptor eventDescriptor = describe(transactionMonitors.getXid(), -1L, event);
             eventDescriptorFlux.onNext(eventDescriptor);
         } else if (event instanceof TransactionCommittedEvent) {
             transactionMonitors.onNextCommit((TransactionCommittedEvent) event);
-            EventDescriptor eventDescriptor = describe(xid, -1L, event);
+            EventDescriptor eventDescriptor = describe(transactionMonitors.getXid(), -1L, event);
             eventDescriptorFlux.onNext(eventDescriptor);
         }else if (event instanceof TransactionCompletedEvent) {
             transactionMonitors.onNextComplete((TransactionCompletedEvent) event);
         } else if (event instanceof TransactionAbortedEvent) {
             transactionMonitors.onNextAbort((TransactionAbortedEvent) event);
-            EventDescriptor eventDescriptor = describe(xid, -1L, event);
+            EventDescriptor eventDescriptor = describe(transactionMonitors.getXid(), -1L, event);
             eventDescriptorFlux.onNext(eventDescriptor);
         } else if (event instanceof TransactionDetailsAttachedEvent) {
             transactionMonitors.onNextDetailsAttached((TransactionDetailsAttachedEvent) event);
-            EventDescriptor eventDescriptor = describe(xid, -1L, event);
+            EventDescriptor eventDescriptor = describe(transactionMonitors.getXid(), -1L, event);
             eventDescriptorFlux.onNext(eventDescriptor);
         } else if (event instanceof ConflictResolvedEvent) {
             transactionMonitors.onNextConflict((ConflictResolvedEvent) event);
         } else if (event instanceof ProgressLoggedEvent) {
             ProgressLoggedEvent progressEvent = (ProgressLoggedEvent) event;
             transactionMonitors.onNextLogged(progressEvent);
-            EventDescriptor eventDescriptor = describe(xid, progressEvent.getXcs(), event);
+            EventDescriptor eventDescriptor = describe(transactionMonitors.getXid(), progressEvent.getXcs(), event);
             eventDescriptorFlux.onNext(eventDescriptor);
         }
     }
@@ -149,28 +148,27 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
         return eventDescriptor;
     }
 
-    public synchronized boolean hasSubscribedMonitors(long xid) {
-
-        return subscribedMonitors.containsKey(xid);
-    }
-
     public synchronized TransactionMonitors getSubscribedMonitors(long xid) {
+        
         TransactionMonitors transactionMonitors = subscribedMonitors.get(xid);
-        if (transactionMonitors == null) {
-            transactionMonitors = new TransactionMonitors();
-            subscribedMonitors.put(xid, transactionMonitors);
-        }
-
+        
         return transactionMonitors;
     }
     
-    public synchronized TransactionMonitors unregisterSubscribedMonitors(long xid) {
+    public void registerMonitors(long xid) {
+        
+        TransactionMonitors transactionMonitors = new TransactionMonitors(xid);
+        
+        subscribedMonitors.put(xid, transactionMonitors);
+    }
+    
+    public synchronized TransactionMonitors unregisterMonitors(long xid) {
         
         LOGGER.info("Unregister subscribed monitors for xid={}", xid);
         
         TransactionMonitors  transactionMonitors = subscribedMonitors.remove(xid);
         
-        transactionMonitors.close();
+        //transactionMonitors.close();
         
         return transactionMonitors;
     }
@@ -178,7 +176,7 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
     @Override
     public TransactionLifecycleMonitorService stop() {
 
-        LOGGER.info("Stopping transaction lifecycle monitor");
+        LOGGER.info("Stopping transaction lifecycle monitor service");
 
         kafkaStreams.close();
 

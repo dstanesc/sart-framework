@@ -2,6 +2,8 @@ package org.sartframework.transaction;
 
 import org.sartframework.aggregate.Publisher;
 import org.sartframework.command.DomainCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.EventDescriptor;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
@@ -47,6 +49,10 @@ public interface BusinessTransactionManager extends Publisher {
     Flux<DomainEvent<? extends DomainCommand>> transactionProgressEvents(long xid);
     
     Flux<DomainEvent<? extends DomainCommand>> transactionCompensationEvents(long xid);
+    
+    Flux<DomainError> domainErrors(long xid);
+    
+    Flux<TransactionError> transactionErrors(long xid);
     
     Mono<TransactionCompletedEvent> completeListener(long xid);
     

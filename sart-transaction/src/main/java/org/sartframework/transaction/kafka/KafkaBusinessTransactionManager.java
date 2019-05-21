@@ -13,14 +13,16 @@ import org.sartframework.command.transaction.CommitTransactionCommand;
 import org.sartframework.command.transaction.CreateTransactionCommand;
 import org.sartframework.command.transaction.StartTransactionCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.EventDescriptor;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
-import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.kafka.channels.KafkaWriters;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
@@ -29,7 +31,9 @@ import org.sartframework.session.SystemTransaction;
 import org.sartframework.transaction.BusinessTransactionManager;
 import org.sartframework.transaction.generator.TransactionSequence;
 import org.sartframework.transaction.generator.ZookeeperTransactionSequence;
+import org.sartframework.transaction.kafka.services.DomainErrorMonitorService;
 import org.sartframework.transaction.kafka.services.TransactionCommandService;
+import org.sartframework.transaction.kafka.services.TransactionErrorMonitorService;
 import org.sartframework.transaction.kafka.services.TransactionLifecycleMonitorService;
 import org.sartframework.transaction.kafka.services.TransactionRollbackService;
 import org.sartframework.transaction.kafka.services.TransactionSessionMonitorService;
@@ -59,6 +63,10 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
     private TransactionCommandService transactionCommandService;
     
     private TransactionLifecycleMonitorService transactionLifecycleMonitorService;
+    
+    private DomainErrorMonitorService domainErrorMonitorService;
+    
+    private TransactionErrorMonitorService transactionErrorMonitorService;
     
     private TransactionSessionMonitorService transactionSessionMonitorService;
 
@@ -90,10 +98,21 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
         
         String sid = kafkaStreamsConfiguration.getSid();
         
-        //should we better have an explicit dependency on creating monitors before start instead of time sequence
+        
+        transactionLifecycleMonitorService.registerMonitors(xid);
+        
+        domainErrorMonitorService.registerMonitors(xid);
+        
+        transactionErrorMonitorService.registerMonitors(xid);
+        
+        
         completeListener(xid).subscribe( c -> {
             
-            unregisterTransactionMonitors(xid);
+            transactionLifecycleMonitorService.unregisterMonitors(xid);
+            
+            domainErrorMonitorService.unregisterMonitors(xid);
+            
+            transactionErrorMonitorService.unregisterMonitors(xid);
         });
         
         createTransaction(xid);
@@ -144,6 +163,16 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
         this.transactionLifecycleMonitorService = transactionLifecycleMonitorService;
     }
 
+    public void registerDomainErrorMonitorService(DomainErrorMonitorService domainErrorMonitorService) {
+
+        this.domainErrorMonitorService = domainErrorMonitorService;
+    }
+    
+    public void registerTransactionErrorMonitorService(TransactionErrorMonitorService transactionErrorMonitorService) {
+
+        this.transactionErrorMonitorService = transactionErrorMonitorService;
+    }
+    
     public void registerTransactionSessionMonitorService(TransactionSessionMonitorService transactionSessionMonitorService) {
 
         this.transactionSessionMonitorService = transactionSessionMonitorService;
@@ -160,10 +189,6 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
         transactionRollbackService.stop();
     }
     
-    public void unregisterTransactionMonitors(long xid) {
-       
-       this.transactionLifecycleMonitorService.unregisterSubscribedMonitors(xid);
-    }
 
     @Override
     public void createTransaction(long xid) {
@@ -227,6 +252,15 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
         writeChannels.getDomainEventWriter().sendDefault(domainEvent.getAggregateKey(), domainEvent);
     }
 
+
+    @Override
+    public void publish(DomainError domainError) {
+        
+        LOGGER.info("publish domain error {} {}, xid={}", domainError.getAggregateKey(), domainError, domainError.getXid());
+        
+        writeChannels.getDomainErrorWriter().sendDefault(domainError.getXid(), domainError);
+    }
+    
     @Override
     public void publish(TransactionCommand transactionCommand) {
 
@@ -241,6 +275,25 @@ public class KafkaBusinessTransactionManager implements BusinessTransactionManag
         LOGGER.info("publish transaction event xid={} {}", transactionEvent.getXid(), transactionEvent);
 
         writeChannels.getTransactionEventWriter().sendDefault(transactionEvent.getXid(), transactionEvent);
+    }
+
+    @Override
+    public void publish(TransactionError transactionError) {
+       
+        LOGGER.info("publish transaction error xid={} {}", transactionError.getXid(), transactionError);
+
+        writeChannels.getTransactionErrorWriter().sendDefault(transactionError.getXid(), transactionError);
+    }
+
+
+    @Override
+    public Flux<DomainError> domainErrors(long xid) {
+        return domainErrorMonitorService.getSubscribedMonitors(xid).domainErrorMonitor();
+    }
+
+    @Override
+    public Flux<TransactionError> transactionErrors(long xid) {
+        return transactionErrorMonitorService.getSubscribedMonitors(xid).transactionErrorMonitor();
     }
 
     @Override

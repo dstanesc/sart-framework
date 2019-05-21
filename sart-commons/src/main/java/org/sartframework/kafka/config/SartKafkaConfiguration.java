@@ -30,12 +30,18 @@ public class SartKafkaConfiguration {
 
         @NotEmpty
         String domainEvent;
+        
+        @NotEmpty
+        String domainError;
 
         @NotEmpty
         String transactionCommand;
 
         @NotEmpty
         String transactionEvent;
+        
+        @NotEmpty
+        String transactionError;
 
         @NotEmpty
         String conflictQuery;
@@ -135,8 +141,24 @@ public class SartKafkaConfiguration {
             this.domainQueryEvent = domainQueryEvent;
         }
 
+        public String getDomainError() {
+            return domainError;
+        }
+
+        public void setDomainError(String domainError) {
+            this.domainError = domainError;
+        }
+
+        public String getTransactionError() {
+            return transactionError;
+        }
+
+        public void setTransactionError(String transactionError) {
+            this.transactionError = transactionError;
+        }
+
         public List<String> getAll() {
-            return Arrays.asList(domainCommand, domainEvent, transactionCommand, transactionEvent, conflictQuery, conflictQueryResult,
+            return Arrays.asList(domainCommand, domainEvent, domainError, transactionCommand, transactionEvent, transactionError, conflictQuery, conflictQueryResult,
                 conflictQueryEvent, domainQuery, domainQueryResult, domainQueryEvent);
         }
     }
@@ -291,6 +313,15 @@ public class SartKafkaConfiguration {
 
         return Collections.unmodifiableMap(kafkaConfig);
     }
+    
+    public Map<String, Object> getKafkaTransactionErrorProducerConfig() {
+        final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
+
+        return Collections.unmodifiableMap(kafkaConfig);
+    }
 
     public Map<String, Object> getKafkaDomainCommandProducerConfig() {
         final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
@@ -305,6 +336,15 @@ public class SartKafkaConfiguration {
         final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
         kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
         kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        kafkaConfig.putAll(getKafkaCommonConfig());
+
+        return Collections.unmodifiableMap(kafkaConfig);
+    }
+    
+    public Map<String, Object> getKafkaDomainErrorProducerConfig() {
+        final Map<String, Object> kafkaConfig = new HashMap<String, Object>();
+        kafkaConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, SartGenericSerializer.class);
+        kafkaConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
         kafkaConfig.putAll(getKafkaCommonConfig());
 
         return Collections.unmodifiableMap(kafkaConfig);
@@ -359,6 +399,10 @@ public class SartKafkaConfiguration {
     public String getDomainEventTopic() {
         return system.id + DASH + topics.domainEvent;
     }
+    
+    public String getDomainErrorTopic() {
+        return system.id + DASH + topics.domainError;
+    }
 
     public String getTransactionCommandTopic() {
         return system.id + DASH + topics.transactionCommand;
@@ -366,6 +410,10 @@ public class SartKafkaConfiguration {
 
     public String getTransactionEventTopic() {
         return system.id + DASH + topics.transactionEvent;
+    }
+    
+    public String getTransactionErrorTopic() {
+        return system.id + DASH + topics.transactionError;
     }
 
     public String getConflictQueryTopic() {

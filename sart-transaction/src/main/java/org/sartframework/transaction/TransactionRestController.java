@@ -2,13 +2,15 @@ package org.sartframework.transaction;
 
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.AttachTransactionDetailsCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.EventDescriptor;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
-import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.session.SystemSnapshot;
 import org.sartframework.session.SystemTransaction;
@@ -90,7 +92,7 @@ public abstract class TransactionRestController {
     
     @GetMapping("/transaction/{xid}/commitListener")
     public Mono<TransactionCommittedEvent> commitListener(@PathVariable long xid) {
-
+        LOGGER.info("CommitListener subscribe xid={}", xid);
         return transactionManager.commitListener(xid).doOnSuccess(e -> {
             LOGGER.info("dispatched commit message {} ", e);
         }).doOnTerminate(() -> LOGGER.info("Commit listener terminated")).doOnCancel(() -> LOGGER.info("Commit listener cancelled"));
@@ -98,7 +100,7 @@ public abstract class TransactionRestController {
 
     @GetMapping("/transaction/{xid}/abortListener")
     public Mono<TransactionAbortedEvent> abortListener(@PathVariable long xid) {
-
+        LOGGER.info("AbortListener subscribe xid={}", xid);
         return transactionManager.abortListener(xid).doOnSuccess(e -> {
             LOGGER.info("dispatched abort message {} ", e);
         }).doOnTerminate(() -> LOGGER.info("Abort listener terminated")).doOnCancel(() -> LOGGER.info("Abort listener cancelled"));
@@ -107,7 +109,7 @@ public abstract class TransactionRestController {
 
     @GetMapping("/transaction/{xid}/completeListener")
     public Mono<TransactionCompletedEvent> completeListener(@PathVariable long xid) {
-
+        LOGGER.info("CompleteListener subscribe xid={}", xid);
         return transactionManager.completeListener(xid).doOnSuccess(e -> {
             LOGGER.info("dispatched complete message {} ", e);
         }).doOnTerminate(() -> LOGGER.info("Complete listener terminated"))
@@ -116,7 +118,7 @@ public abstract class TransactionRestController {
     
     @GetMapping("/transaction/{xid}/detailsAttachedListener")
     public Flux<TransactionDetailsAttachedEvent> detailsAttachedListener(@PathVariable long xid) {
-
+        LOGGER.info("DetailsAttachedListener subscribe xid={} eventType=TransactionDetailsAttachedEvent", xid);
         return transactionManager.detailsAttachedListener(xid).doOnNext(e -> {
             LOGGER.info("Details attached message {} ", e);
         }).doOnTerminate(() -> LOGGER.info("Details attached listener terminated"))
@@ -126,7 +128,7 @@ public abstract class TransactionRestController {
     
     @GetMapping("/transaction/{xid}/conflictListener")
     public Flux<ConflictResolvedEvent> conflictListener(@PathVariable long xid) {
-
+        LOGGER.info("ConflictResolvedEvents subscribe xid={} eventType=ConflictResolvedEvent", xid);
         return transactionManager.conflictListener(xid).doOnNext(e -> {
             LOGGER.info("Conflict resolved message {} ", e);
         }).doOnTerminate(() -> LOGGER.info("Conflict resolution listener terminated"))
@@ -135,6 +137,7 @@ public abstract class TransactionRestController {
 
     @GetMapping(path = "/transaction/{xid}/{eventType}/progressListener")
     public Flux<DomainEvent<? extends DomainCommand>> progressByEventType(@PathVariable long xid, @PathVariable String eventType) {
+        LOGGER.info("Progress events subscribe xid={} eventType={}", xid, eventType);
         return transactionManager.transactionProgressEvents(xid).doOnNext(e -> {
             LOGGER.info("Progress message {} ", e);
         }).filter(e -> e.getClass().getSimpleName().equals(eventType)).doOnNext(e -> {
@@ -145,6 +148,7 @@ public abstract class TransactionRestController {
 
     @GetMapping("/transaction/{xid}/{eventType}/compensateListener")
     public Flux<DomainEvent<? extends DomainCommand>> compensateByEventType(@PathVariable long xid, @PathVariable String eventType) {
+        LOGGER.info("Compensate events subscribe xid={} eventType={}", xid, eventType);
         return transactionManager.transactionCompensationEvents(xid).doOnNext(e -> {
             LOGGER.info("Compensate message {} ", e);
         }).filter(e -> e.getClass().getSimpleName().equals(eventType)).doOnNext(e -> {
@@ -152,9 +156,33 @@ public abstract class TransactionRestController {
         }).doOnTerminate(() -> LOGGER.info("Compensate listener for {} terminated", eventType))
             .doOnCancel(() -> LOGGER.info("Compensate listener for {} cancelled", eventType));
     }
+    
+    @GetMapping("/transaction/{xid}/{errorType}/domainErrorListener")
+    public Flux<DomainError> domainErrorByErrorType(@PathVariable long xid, @PathVariable String errorType) {
+        LOGGER.info("Domain error subscribe xid={} errorType={}", xid, errorType);
+        return transactionManager.domainErrors(xid).doOnNext(e -> {
+            LOGGER.info("Domain error message {} ", e);
+        }).filter(e -> e.getClass().getSimpleName().equals(errorType)).doOnNext(e -> {
+            LOGGER.info("Dispatch filtered by {} domain error message {}", errorType, e);
+        }).doOnTerminate(() -> LOGGER.info("Domain error listener for {} terminated", errorType))
+            .doOnCancel(() -> LOGGER.info("Domain error listener for {} cancelled", errorType));
+    }
+    
+    @GetMapping("/transaction/{xid}/{errorType}/transactionErrorListener")
+    public Flux<TransactionError> transactionError(@PathVariable long xid, @PathVariable String errorType) {
+        LOGGER.info("Transaction error subscribe xid={} errorType={}", xid, errorType);
+        return transactionManager.transactionErrors(xid).doOnNext(e -> {
+            LOGGER.info("Transaction error message {} ", e);
+        }).filter(e -> e.getClass().getSimpleName().equals(errorType)).doOnNext(e -> {
+            LOGGER.info("Dispatch filtered by {} transaction error message {}", errorType, e);
+        }).doOnTerminate(() -> LOGGER.info("Transaction error listener for xid={} terminated", xid))
+            .doOnCancel(() -> LOGGER.info("Transaction error listener  for xid={} cancelled", xid));
+    }
+    
 
     @GetMapping("/transaction/events")
     public Flux<EventDescriptor> transactionEvents() {
+        LOGGER.info("Transaction events (descriptors) subscribe");
         return transactionManager.eventDescriptor().doOnNext(e -> {
             LOGGER.info("Transaction event stream element {} ", e);
         }).doOnTerminate(() -> LOGGER.info("Transaction event stream listener terminated"))

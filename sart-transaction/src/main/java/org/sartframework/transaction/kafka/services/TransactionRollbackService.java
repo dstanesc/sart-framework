@@ -16,6 +16,7 @@ import org.sartframework.event.AggregateCreatedEvent;
 import org.sartframework.event.AggregateFieldUpdatedEvent;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.TransactionEvent;
+import org.sartframework.event.VoidDomainEvent;
 import org.sartframework.event.transaction.ProgressLoggedEvent;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.kafka.serializers.serde.SartSerdes;
@@ -47,7 +48,7 @@ public class TransactionRollbackService implements ManagedService<TransactionRol
     public TransactionRollbackService start() {
 
         LOGGER.info("Starting transaction rollback service for xid={}, offset={}", xid, startOffset);
-
+// FIXME seek offset for speed 
 //        Map<String, Object> kafkaConsumerConfig = kafkaStreamsConfiguration
 //            .getKafkaConsumerProcessorConfig("transaction-rollback-consumer-group-" + xid);
 //
@@ -147,21 +148,23 @@ public class TransactionRollbackService implements ManagedService<TransactionRol
                 long xcs = progressEvent.getXcs();
 
                 DomainEvent<? extends DomainCommand> domainEvent = progressEvent.getDomainEvent();
-                
-              boolean skip = false;
-              
-              if (domainEvent instanceof AggregateCreatedEvent) {
-                  aggregateCreations.add(domainEvent.getAggregateKey());
-              } else if (aggregateCreations.contains(domainEvent.getAggregateKey())) {
-                  skip = true;
-              } else if (domainEvent instanceof AggregateFieldUpdatedEvent) {
-                  String updateKey = domainEvent.getAggregateKey() + "_" + domainEvent.getChangeKey();
-                  if (aggregateFieldUpdates.contains(updateKey)) {
-                      skip = true;
-                  } else {
-                      aggregateFieldUpdates.add(updateKey);
-                  }
-              }
+
+                boolean skip = false;
+
+                if (domainEvent instanceof AggregateCreatedEvent) {
+                    aggregateCreations.add(domainEvent.getAggregateKey());
+                } else if (aggregateCreations.contains(domainEvent.getAggregateKey())) {
+                    skip = true;
+                } else if (domainEvent instanceof VoidDomainEvent) {
+                    skip = true;
+                } else if (domainEvent instanceof AggregateFieldUpdatedEvent) {
+                    String updateKey = domainEvent.getAggregateKey() + "_" + domainEvent.getChangeKey();
+                    if (aggregateFieldUpdates.contains(updateKey)) {
+                        skip = true;
+                    } else {
+                        aggregateFieldUpdates.add(updateKey);
+                    }
+                }
 
                 return new CompensateDomainEventCommand(xid, xcs, domainEvent, skip);
             })

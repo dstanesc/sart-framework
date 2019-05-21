@@ -7,6 +7,7 @@ import org.sartframework.aggregate.AnnotatedDomainAggregate;
 import org.sartframework.aggregate.HandlerNotFound;
 import org.sartframework.command.CreateAggregateCommand;
 import org.sartframework.command.DomainCommand;
+import org.sartframework.error.transaction.SystemFault;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,10 +62,15 @@ public class DomainCommandProcessor implements Processor<String, DomainCommand> 
                 CreateAggregateCommand creationCommand = (CreateAggregateCommand) domainCommand;
 
                 aggregate = (AnnotatedDomainAggregate) creationCommand.newAggregate();
-            }
-
-            else
+                
+            } else {
+                
                 LOGGER.error("invalid domain command or out of order command sequence " + domainCommand);
+                
+                streamsContext.publish( new SystemFault(xid, new RuntimeException("invalid domain command or out of order command sequence " + domainCommand)));
+            
+                context.commit();
+            }
         }
 
         if (aggregate != null) {
@@ -84,6 +90,10 @@ public class DomainCommandProcessor implements Processor<String, DomainCommand> 
                 LOGGER.error("Handler missing in aggregate. Use @DomainCommandHandler annotation on {}#methodName({} domainCommand)",
                     e.getHandlingClass(), e.getArgumentType());
                 LOGGER.error("Handler missing in aggregate", e);
+                
+                streamsContext.publish( new SystemFault(xid, e));
+                
+                context.commit();
             }
         }
     }

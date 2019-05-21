@@ -9,6 +9,8 @@ import org.sartframework.aggregate.DomainAggregate;
 import org.sartframework.aggregate.TransactionAggregate;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.QueryEvent;
 import org.sartframework.event.TransactionEvent;
@@ -91,12 +93,14 @@ public class PlatformOperationRegistry {
         registerOperationCategory(DomainAggregate.class, packageName);
         registerOperationCategory(DomainCommand.class, packageName);
         registerOperationCategory(DomainEvent.class, packageName);
+        registerOperationCategory(DomainError.class, packageName);
         registerOperationCategory(DomainQuery.class, packageName);
         registerOperationCategory(QueryResult.class, packageName);
         registerOperationCategory(QueryEvent.class, packageName);
         registerOperationCategory(TransactionAggregate.class, packageName);
         registerOperationCategory(TransactionCommand.class, packageName);
         registerOperationCategory(TransactionEvent.class, packageName);
+        registerOperationCategory(TransactionError.class, packageName);
         
         return this;
     }

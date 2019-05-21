@@ -7,5 +7,5 @@ public interface CommandChannel {
 
     void publish(TransactionCommand transactionCommand);
     
-    void publish(DomainCommand atomicCommand);
+    void publish(DomainCommand domainCommand);
 }

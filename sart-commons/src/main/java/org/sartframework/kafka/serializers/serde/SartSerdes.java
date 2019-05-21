@@ -6,6 +6,8 @@ import org.sartframework.aggregate.DomainAggregate;
 import org.sartframework.aggregate.TransactionAggregate;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.QueryEvent;
 import org.sartframework.event.TransactionEvent;
@@ -24,6 +26,10 @@ public class SartSerdes {
     }
     
     public static <T extends DomainEvent<?>> Serde<T> DomainEventSerde() {
+        return new SartGenericSerde<T>();
+    }
+    
+    public static <T extends DomainError> Serde<T> DomainErrorSerde() {
         return new SartGenericSerde<T>();
     }
     
@@ -51,14 +57,13 @@ public class SartSerdes {
         return new SartGenericSerde<T>();
     }
     
-    public static <T extends RunningTransactions> Serde<T> RunningTransactionsSerde() {
+    public static <T extends TransactionError> Serde<T> TransactionErrorSerde() {
         return new SartGenericSerde<T>();
     }
     
-    
-//    public static <T> Serde<T> Proto() {
-//        return new ProtoSerde<T>();
-//    }
+    public static <T extends RunningTransactions> Serde<T> RunningTransactionsSerde() {
+        return new SartGenericSerde<T>();
+    }
 
     public static Serde<String> String() {
         return Serdes.String();

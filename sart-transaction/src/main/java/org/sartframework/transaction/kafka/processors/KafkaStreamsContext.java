@@ -4,6 +4,8 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.sartframework.aggregate.Publisher;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.TransactionEvent;
 import org.slf4j.Logger;
@@ -19,10 +21,13 @@ public class KafkaStreamsContext implements Publisher {
     
     private String domainEventChannel;
     
+    private String domainErrorChannel;
+    
     private String transactionCommandChannel;
     
     private String transactionEventChannel;
     
+    private String transactionErrorChannel;
     
     public KafkaStreamsContext() {
         super();
@@ -53,6 +58,19 @@ public class KafkaStreamsContext implements Publisher {
     }
     
     @Override
+    public void publish(DomainError domainError) {
+        
+        String channelName = getDomainErrorChannel();
+        
+        if(channelName == null) throw new UnsupportedOperationException("DomainError channel not configured");
+        
+        LOGGER.info("KafkaStreamsContext publish domain error {} to {}", domainError, channelName);
+        
+        getContext().forward(domainError.getXid(), domainError, channelName /*"domain-error-sink"*/);
+        
+    }
+    
+    @Override
     public void publish(TransactionCommand transactionCommand) {
         
         String channelName = getTransactionCommandChannel();
@@ -77,6 +95,18 @@ public class KafkaStreamsContext implements Publisher {
     }
 
     
+    @Override
+    public void publish(TransactionError transactionError) {
+       
+        String channelName = getTransactionErrorChannel();
+        
+        if(channelName == null) throw new UnsupportedOperationException("TransactionError channel not configured");
+        
+        LOGGER.info("KafkaStreamsContext publish transaction error {} to {}", transactionError, channelName);
+        
+        getContext().forward(transactionError.getXid(), transactionError, channelName /*"transaction-error-sink"*/);
+    }
+
     public ProcessorContext getContext() {
         return context;
     }
@@ -127,4 +157,24 @@ public class KafkaStreamsContext implements Publisher {
         this.transactionEventChannel = transactionEventChannelName;
         return this;
     }
+
+    public String getDomainErrorChannel() {
+        return domainErrorChannel;
+    }
+
+    public KafkaStreamsContext setDomainErrorChannel(String domainErrorChannel) {
+        this.domainErrorChannel = domainErrorChannel;
+        return this;
+    }
+
+    public String getTransactionErrorChannel() {
+        return transactionErrorChannel;
+    }
+
+    public KafkaStreamsContext setTransactionErrorChannel(String transactionErrorChannel) {
+        this.transactionErrorChannel = transactionErrorChannel;
+        return this;
+    }
+    
+    
 }

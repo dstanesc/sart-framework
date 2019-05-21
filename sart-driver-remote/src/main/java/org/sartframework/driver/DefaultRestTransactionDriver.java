@@ -16,6 +16,8 @@ import org.apache.http.entity.ContentType;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.AttachTransactionDetailsCommand;
 import org.sartframework.command.transaction.TransactionStatus.Isolation;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
@@ -381,6 +383,47 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
     }
 
     @Override
+    public <T extends DomainEvent<? extends DomainCommand>> void onCompensate(Consumer<T> compensateConsumer, Class<T> eventType, long xid) {
+
+        LOGGER.info("Subscribe to transaction compensate events of {}", eventType);
+
+        String apiUrl = "/transaction/{xid}/{eventType}/compensateListener";
+
+        Flux<T> compensateFlux = transactionClient.get().uri(apiUrl, xid, eventType.getSimpleName()).accept(MediaType.APPLICATION_STREAM_JSON)
+            .retrieve().bodyToFlux(eventType);
+
+        compensateFlux.subscribe(compensateConsumer);
+    }
+    
+    
+    @Override
+    public <T extends DomainError> void onDomainError(Consumer<T> domainErrorConsumer, Class<T> errorType, long xid) {
+      
+        LOGGER.info("Subscribe to domain errors of type {}", errorType);
+
+        String apiUrl = "/transaction/{xid}/{errorType}/domainErrorListener";
+
+        Flux<T> errorFlux = transactionClient.get().uri(apiUrl, xid, errorType.getSimpleName()).accept(MediaType.APPLICATION_STREAM_JSON)
+            .retrieve().bodyToFlux(errorType);
+
+        errorFlux.subscribe(domainErrorConsumer);
+    }
+
+    @Override
+    public <T extends TransactionError> void onTransactionError(Consumer<T> transactionErrorConsumer, Class<T> errorType, long xid) {
+       
+        LOGGER.info("Subscribe to transaction errors of type {}", errorType);
+
+        String apiUrl = "/transaction/{xid}/{errorType}/transactionErrorListener";
+
+        Flux<T> errorFlux = transactionClient.get().uri(apiUrl, xid, errorType.getSimpleName()).accept(MediaType.APPLICATION_STREAM_JSON)
+            .retrieve().bodyToFlux(errorType);
+
+        errorFlux.subscribe(transactionErrorConsumer);
+        
+    }
+
+    @Override
     public void onDetailsAttached(Consumer<TransactionDetailsAttachedEvent> detailsConsumer, long xid) {
 
         LOGGER.info("Subscribe to attached transaction details events of {}", xid);
@@ -393,18 +436,7 @@ public class DefaultRestTransactionDriver implements TransactionDriverInternal, 
         compensateFlux.subscribe(detailsConsumer);
     }
 
-    @Override
-    public <T extends DomainEvent<? extends DomainCommand>> void onCompensate(Consumer<T> compensateConsumer, Class<T> eventType, long xid) {
 
-        LOGGER.info("Subscribe to transaction compensate events of {}", eventType);
-
-        String apiUrl = "/transaction/{xid}/{eventType}/compensateListener";
-
-        Flux<T> compensateFlux = transactionClient.get().uri(apiUrl, xid, eventType.getSimpleName()).accept(MediaType.APPLICATION_STREAM_JSON)
-            .retrieve().bodyToFlux(eventType);
-
-        compensateFlux.subscribe(compensateConsumer);
-    }
 
     @Override
     public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,

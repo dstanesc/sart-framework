@@ -8,6 +8,8 @@ import org.sartframework.command.DomainCommand;
 import org.sartframework.command.VoidDomainCommand;
 import org.sartframework.command.transaction.LogProgressCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.GenericVoidDomainEvent;
 import org.sartframework.event.TransactionEvent;
@@ -31,6 +33,11 @@ public abstract class AnnotatedDomainAggregate extends GenericDomainAggregate im
     }
 
     @Override
+    public void publish(TransactionError transactionError) {
+        publisher.publish(transactionError);
+    }
+    
+    @Override
     public void publish(DomainCommand atomicCommand) {
         publisher.publish(atomicCommand);
     }
@@ -38,6 +45,11 @@ public abstract class AnnotatedDomainAggregate extends GenericDomainAggregate im
     @Override
     public void publish(DomainEvent<? extends DomainCommand> domainEvent) {
         publisher.publish(domainEvent);
+    }
+
+    @Override
+    public void publish(DomainError domainError) {
+        publisher.publish(domainError);
     }
 
     public AnnotatedDomainAggregate setPublisher(Publisher publisher) {

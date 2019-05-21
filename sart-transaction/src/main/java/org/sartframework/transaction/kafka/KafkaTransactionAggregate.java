@@ -4,6 +4,7 @@ import org.sartframework.aggregate.Publisher;
 import org.sartframework.annotation.Evolvable;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.event.transaction.DomainEventCompensatedEvent;
 import org.sartframework.event.transaction.ProgressLoggedEvent;
@@ -39,15 +40,16 @@ public class KafkaTransactionAggregate extends GenericTransactionAggregate {
     protected void dispatch(DomainCommand domainCommand) {
         getPublisher().publish(domainCommand);
     }
-
-    
     
     @Override
     protected void dispatch(TransactionCommand transactionCommand) {
         getPublisher().publish(transactionCommand);
     }
 
-
+    @Override
+    protected void dispatch(TransactionError transactionError) {
+        getPublisher().publish(transactionError);
+    }
 
     @Override
     protected void dispatch(TransactionEvent transactionEvent) {

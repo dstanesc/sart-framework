@@ -14,6 +14,8 @@ import org.apache.http.client.fluent.Request;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.AttachTransactionDetailsCommand;
 import org.sartframework.command.transaction.TransactionStatus.Isolation;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.query.QueryUnsubscribedEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
@@ -55,7 +57,11 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
 
     final private KafkaWriters writeChannels;
 
-    Map<Long,ClientTransactionLifecycleMonitorService> monitorServices = new HashMap<>();
+    Map<Long, ClientTransactionLifecycleMonitorService> transactionLifecycleMonitorServices = new HashMap<>();
+
+    Map<Long, ClientDomainErrorMonitorService> domainErrorMonitorServices = new HashMap<>();
+
+    Map<Long, ClientTransactionErrorMonitorService> transactionErrorMonitorServices = new HashMap<>();
 
     public DefaultTopicTransactionDriver(KafkaWriters writeChannels) {
         super();
@@ -105,22 +111,53 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
 
         long xid = transaction.getXid();
 
-        ClientTransactionLifecycleMonitorService transactionLifecycleMonitorService = new ClientTransactionLifecycleMonitorService(writeChannels.getSartKafkaConfiguration(), xid).start();
+        ClientTransactionLifecycleMonitorService transactionLifecycleMonitorService = new ClientTransactionLifecycleMonitorService(
+            writeChannels.getSartKafkaConfiguration(), xid).start();
+        
+        ClientDomainErrorMonitorService domainErrorMonitorService = new ClientDomainErrorMonitorService(
+            writeChannels.getSartKafkaConfiguration(), xid).start();
+        
+        ClientTransactionErrorMonitorService transactionErrorMonitorService = new ClientTransactionErrorMonitorService(
+            writeChannels.getSartKafkaConfiguration(), xid).start();
 
-        monitorServices.put(xid, transactionLifecycleMonitorService);
+        transactionLifecycleMonitorServices.put(xid, transactionLifecycleMonitorService);
         
+        domainErrorMonitorServices.put(xid, domainErrorMonitorService);
+        
+        transactionErrorMonitorServices.put(xid, transactionErrorMonitorService);
+
         onComplete(c -> {
+
+            try {
+                ClientTransactionLifecycleMonitorService service = transactionLifecycleMonitorServices.remove(xid);
+                service.stop();
+            } catch (Exception e) {
+                // ignore
+                LOGGER.error("Error while stopping monitor ", e);
+            }
             
-            ClientTransactionLifecycleMonitorService monitorService = monitorServices.remove(xid);
+            try {
+                ClientDomainErrorMonitorService service = domainErrorMonitorServices.remove(xid);
+                service.stop();
+            } catch (Exception e) {
+                // ignore
+                LOGGER.error("Error while stopping monitor ", e);
+            }
             
-            monitorService.stop();
             
+            try {
+                ClientTransactionErrorMonitorService service = transactionErrorMonitorServices.remove(xid);
+                service.stop();
+            } catch (Exception e) {
+                // ignore
+                LOGGER.error("Error while stopping monitor ", e);
+            }
+
         }, xid);
-        
+
         return transaction;
     }
-    
-    
+
     @Override
     public SystemTransaction nextTransactionInternal() {
 
@@ -136,9 +173,9 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
             ObjectMapper mapper = new ObjectMapper();
 
             SystemTransaction systemTransaction = mapper.readValue(jsonTransaction, SystemTransaction.class);
-            
+
             return systemTransaction;
-            
+
         } catch (JsonParseException e) {
             throw new RuntimeException(e);
         } catch (JsonMappingException e) {
@@ -161,7 +198,7 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
             Request request = Request.Post(transactionApi.toUrl() + apiUrl);
 
             performMappedRequest(request);
-            
+
         } catch (JsonParseException e) {
             throw new RuntimeException(e);
         } catch (JsonMappingException e) {
@@ -185,7 +222,7 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
             Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
 
             performMappedRequest(request);
-            
+
         } catch (JsonParseException e) {
             throw new RuntimeException(e);
         } catch (JsonMappingException e) {
@@ -209,7 +246,7 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
             Request request = Request.Patch(transactionApi.toUrl() + apiUrl);
 
             performMappedRequest(request);
-            
+
         } catch (JsonParseException e) {
             throw new RuntimeException(e);
         } catch (JsonMappingException e) {
@@ -223,7 +260,7 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
     }
 
     @Override
-    public int statusTransactionInternal(long xid)  {
+    public int statusTransactionInternal(long xid) {
 
         try {
             String apiUrl = "/transaction/" + xid + "/status";
@@ -235,7 +272,7 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
             LOGGER.info("Retrieved transaction status {} -> {}", xid, status);
 
             return status;
-            
+
         } catch (NumberFormatException e) {
             throw new RuntimeException(e);
         } catch (ClientProtocolException e) {
@@ -244,13 +281,12 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
             throw new RuntimeException(e);
         }
     }
-    
-    
+
     @Override
     public void attachTransactionDetails(long xid, TransactionDetails transactionDetails) {
-        
+
         AttachTransactionDetailsCommand attachDetailsCommand = new AttachTransactionDetailsCommand(transactionDetails);
-        
+
         writeChannels.getTransactionCommandWriter().sendDefault(xid, attachDetailsCommand);
     }
 
@@ -282,22 +318,42 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
         }
     }
 
-    private ClientTransactionLifecycleMonitorService getMonitorService(Long xid) {
-        
-        ClientTransactionLifecycleMonitorService transactionLifecycleMonitorService = monitorServices.get(xid);
-        
-        if(transactionLifecycleMonitorService == null) throw new IllegalStateException("Lifecycle monitor service not available");
-        
-       return transactionLifecycleMonitorService;
+    private ClientTransactionLifecycleMonitorService getTrasactionLifecycleMonitorService(Long xid) {
+
+        ClientTransactionLifecycleMonitorService transactionLifecycleMonitorService = transactionLifecycleMonitorServices.get(xid);
+
+        if (transactionLifecycleMonitorService == null)
+            throw new IllegalStateException("Lifecycle monitor service not available");
+
+        return transactionLifecycleMonitorService;
     }
-    
-    
+
+    private ClientDomainErrorMonitorService getDomainErrorMonitorService(Long xid) {
+
+        ClientDomainErrorMonitorService domainErrorMonitorService = domainErrorMonitorServices.get(xid);
+
+        if (domainErrorMonitorService == null)
+            throw new IllegalStateException("Domain error monitor service not available");
+
+        return domainErrorMonitorService;
+    }
+
+    private ClientTransactionErrorMonitorService getTransactionErrorMonitorService(Long xid) {
+
+        ClientTransactionErrorMonitorService transactionErrorMonitorService = transactionErrorMonitorServices.get(xid);
+
+        if (transactionErrorMonitorService == null)
+            throw new IllegalStateException("Transaction error monitor service not available");
+
+        return transactionErrorMonitorService;
+    }
+
     @Override
     public void onStart(Consumer<TransactionStartedEvent> startConsumer, Long xid) {
 
         LOGGER.info("Subscribe to start event");
-        
-        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
+
+        ClientTransactionLifecycleMonitorService monitorService = getTrasactionLifecycleMonitorService(xid);
 
         Mono<TransactionStartedEvent> startedMono = monitorService.getTransactionMonitors().startMonitor();
 
@@ -308,8 +364,8 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
     public void onCommit(Consumer<TransactionCommittedEvent> commitConsumer, long xid) {
 
         LOGGER.info("Subscribe to commit event");
-        
-        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
+
+        ClientTransactionLifecycleMonitorService monitorService = getTrasactionLifecycleMonitorService(xid);
 
         Mono<TransactionCommittedEvent> committedMono = monitorService.getTransactionMonitors().commitMonitor();
 
@@ -320,8 +376,8 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
     public void onAbort(Consumer<TransactionAbortedEvent> abortConsumer, long xid) {
 
         LOGGER.info("Subscribe to abort event");
-        
-        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
+
+        ClientTransactionLifecycleMonitorService monitorService = getTrasactionLifecycleMonitorService(xid);
 
         Mono<TransactionAbortedEvent> abortedMono = monitorService.getTransactionMonitors().abortMonitor();
 
@@ -333,8 +389,8 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
 
         LOGGER.info("Subscribe to complete event");
 
-        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
-        
+        ClientTransactionLifecycleMonitorService monitorService = getTrasactionLifecycleMonitorService(xid);
+
         Mono<TransactionCompletedEvent> completedMono = monitorService.getTransactionMonitors().completeMonitor();
 
         completedMono.subscribe(completeConsumer);
@@ -345,8 +401,8 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
 
         LOGGER.info("Subscribe to conflict resolved event");
 
-        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
-        
+        ClientTransactionLifecycleMonitorService monitorService = getTrasactionLifecycleMonitorService(xid);
+
         Flux<ConflictResolvedEvent> progressFlux = monitorService.getTransactionMonitors().conflictResolvedMonitor();
 
         progressFlux.subscribe(conflictConsumer);
@@ -357,28 +413,54 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
     public <T extends DomainEvent<? extends DomainCommand>> void onProgress(Consumer<T> progressConsumer, Class<T> eventType, long xid) {
 
         LOGGER.info("Subscribe to transaction progress events of {}", eventType);
-        
-        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
 
-        ReplayProcessor<DomainEvent<? extends DomainCommand>> progressMonitor = monitorService.getTransactionMonitors()
-            .progressMonitor();
+        ClientTransactionLifecycleMonitorService monitorService = getTrasactionLifecycleMonitorService(xid);
+
+        ReplayProcessor<DomainEvent<? extends DomainCommand>> progressMonitor = monitorService.getTransactionMonitors().progressMonitor();
 
         Flux<T> progressFlux = (Flux<T>) progressMonitor.filter(e -> e.getClass().equals(eventType));
 
         progressFlux.subscribe(progressConsumer);
     }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends DomainError> void onDomainError(Consumer<T> domainErrorConsumer, Class<T> errorType, long xid) {
 
-    
-    
+        LOGGER.info("Subscribe to domain error of {}", errorType);
+   
+        ClientDomainErrorMonitorService monitorService = getDomainErrorMonitorService(xid);
+        
+        ReplayProcessor<DomainError> domainErrorMonitor = monitorService.getDomainErrorMonitors().domainErrorMonitor();
+        
+        Flux<T> errorFlux = (Flux<T>)  domainErrorMonitor.filter(e -> e.getClass().equals(errorType));
+        
+        errorFlux.subscribe(domainErrorConsumer);
+    }
+
+    @Override
+    public <T extends TransactionError> void onTransactionError(Consumer<T> transactionErrorConsumer, Class<T> errorType, long xid) {
+       
+        LOGGER.info("Subscribe to transaction error of {}", errorType);
+        
+        ClientTransactionErrorMonitorService monitorService = getTransactionErrorMonitorService(xid);
+        
+        ReplayProcessor<TransactionError> transactionErrorMonitor = monitorService.getTransactionErrorMonitors().transactionErrorMonitor();
+        
+        Flux<T> errorFlux = (Flux<T>) transactionErrorMonitor.filter(e -> e.getClass().equals(errorType));
+        
+        errorFlux.subscribe(transactionErrorConsumer);
+    }
+
     @Override
     public void onDetailsAttached(Consumer<TransactionDetailsAttachedEvent> detailsConsumer, long xid) {
-        
+
         LOGGER.info("Subscribe to attached transaction details for {}", xid);
-        
-        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
-        
+
+        ClientTransactionLifecycleMonitorService monitorService = getTrasactionLifecycleMonitorService(xid);
+
         ReplayProcessor<TransactionDetailsAttachedEvent> detailsAttachedFlux = monitorService.getTransactionMonitors().detailsAttachedMonitor();
-        
+
         detailsAttachedFlux.subscribe(detailsConsumer);
     }
 
@@ -387,11 +469,10 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
     public <T extends DomainEvent<? extends DomainCommand>> void onCompensate(Consumer<T> compensateConsumer, Class<T> eventType, long xid) {
 
         LOGGER.info("Subscribe to transaction compensate events of {}", eventType);
-        
-        ClientTransactionLifecycleMonitorService monitorService = getMonitorService(xid);
 
-        ReplayProcessor<DomainEvent<? extends DomainCommand>> compensateMonitor = monitorService.getTransactionMonitors()
-            .compensateMonitor();
+        ClientTransactionLifecycleMonitorService monitorService = getTrasactionLifecycleMonitorService(xid);
+
+        ReplayProcessor<DomainEvent<? extends DomainCommand>> compensateMonitor = monitorService.getTransactionMonitors().compensateMonitor();
 
         Flux<T> compensateFlux = (Flux<T>) compensateMonitor.filter(e -> e.getClass().equals(eventType));
 
@@ -404,7 +485,6 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
                                                    Runnable onComplete) {
 
         Class<? extends DomainQuery> queryType = domainQuery.getClass();
-        
 
         Optional<TopicQueryApi> apiOptional = queryApis.stream().filter(api -> api.hasQuerySupport(queryType)).findFirst();
 
@@ -418,14 +498,13 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
             throw new UnsupportedOperationException("Unsupported query " + domainQuery);
     }
 
-    
     @Override
     public <R, Q extends DomainQuery> void onQuery(long xid, int isolation, SystemSnapshot systemSnapshot, boolean subscribe, Q domainQuery,
                                                    Class<R> resultType, Consumer<R> resultConsumer, Consumer<? super Throwable> errorConsumer,
                                                    Runnable onComplete, TopicQueryApi queryInternalApi) {
 
         Class<? extends DomainQuery> queryType = domainQuery.getClass();
-        
+
         domainQuery.setQueryKey(UUID.randomUUID().toString());
         domainQuery.setQueryXid(xid);
         domainQuery.setSystemSnapshot(systemSnapshot);
@@ -457,7 +536,7 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
         } else
             throw new UnsupportedOperationException("Unsupported query " + domainQuery);
     }
-    
+
     @Override
     public <C extends DomainCommand> void sendCommand(C domainCommand) {
 
@@ -472,7 +551,6 @@ public class DefaultTopicTransactionDriver implements TransactionDriverInternal,
         } else
             throw new UnsupportedOperationException("Unsupported command " + domainCommand);
     }
-
 
     private void performMappedRequest(Request request) throws ClientProtocolException, IOException, JsonParseException, JsonMappingException {
 

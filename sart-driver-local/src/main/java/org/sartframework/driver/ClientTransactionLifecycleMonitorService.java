@@ -31,19 +31,16 @@ public class ClientTransactionLifecycleMonitorService implements ManagedService<
 
     final SartKafkaConfiguration kafkaStreamsConfiguration;
 
-    final TransactionMonitors transactionMonitors = new TransactionMonitors();
-    
-    final Long xid;
-    
+    final TransactionMonitors transactionMonitors;
+
     KafkaStreams kafkaStreams;
 
     ExecutorService executor = Executors.newFixedThreadPool(2);
     
-
     public ClientTransactionLifecycleMonitorService(SartKafkaConfiguration kafkaStreamsConfiguration, Long xid) {
         super();
         this.kafkaStreamsConfiguration = kafkaStreamsConfiguration;
-        this.xid = xid;
+        this.transactionMonitors = new TransactionMonitors(xid);
     }
 
     @Override
@@ -56,10 +53,13 @@ public class ClientTransactionLifecycleMonitorService implements ManagedService<
         KStream<Long, TransactionEvent> transactionEventStream = builder.stream(kafkaStreamsConfiguration.getTransactionEventTopic(),
             Consumed.<Long, TransactionEvent> with(Serdes.Long(), SartSerdes.TransactionEventSerde()));
 
-        transactionEventStream.foreach((xid, event) -> {
+        transactionEventStream
+        
+        .filter((xid, event)-> transactionMonitors.getXid() == xid)
+        
+        .foreach((xid, event) -> {
 
-                executor.submit(() -> dispatchEvent(xid, event));
-            
+                executor.submit(() -> dispatchEvent(xid, event));    
         });
 
         Topology monitorTopology = builder.build();

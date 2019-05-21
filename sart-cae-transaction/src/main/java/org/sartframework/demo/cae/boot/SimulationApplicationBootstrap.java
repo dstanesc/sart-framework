@@ -2,7 +2,9 @@ package org.sartframework.demo.cae.boot;
 
 import org.sartframework.transaction.generator.TransactionSequence;
 import org.sartframework.transaction.kafka.services.DomainCommandService;
+import org.sartframework.transaction.kafka.services.DomainErrorMonitorService;
 import org.sartframework.transaction.kafka.services.TransactionCommandService;
+import org.sartframework.transaction.kafka.services.TransactionErrorMonitorService;
 import org.sartframework.transaction.kafka.services.TransactionLifecycleMonitorService;
 import org.sartframework.transaction.kafka.services.TransactionSessionMonitorService;
 import org.springframework.beans.factory.DisposableBean;
@@ -35,6 +37,12 @@ public class SimulationApplicationBootstrap implements DisposableBean {
     private TransactionLifecycleMonitorService transactionLifecycleMonitorService;
     
     @Autowired
+    private DomainErrorMonitorService domainErrorMonitorService;
+    
+    @Autowired
+    private TransactionErrorMonitorService transactionErrorMonitorService;
+    
+    @Autowired
     private TransactionSessionMonitorService transactionSessionMonitorService;
 
     
@@ -53,6 +61,8 @@ public class SimulationApplicationBootstrap implements DisposableBean {
         transactionCommandService.start();
         domainCommandService.start();
         transactionLifecycleMonitorService.start();
+        domainErrorMonitorService.start();
+        transactionErrorMonitorService.start();
         transactionSessionMonitorService.start();
     }
 
@@ -62,6 +72,8 @@ public class SimulationApplicationBootstrap implements DisposableBean {
         transactionCommandService.stop();
         domainCommandService.stop();
         transactionLifecycleMonitorService.stop();
+        domainErrorMonitorService.stop();
+        transactionErrorMonitorService.stop();
         transactionSessionMonitorService.stop();
     }
 }

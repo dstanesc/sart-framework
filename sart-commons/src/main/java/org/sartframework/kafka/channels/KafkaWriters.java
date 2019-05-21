@@ -3,6 +3,8 @@ package org.sartframework.kafka.channels;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.QueryEvent;
 import org.sartframework.event.TransactionEvent;
@@ -38,6 +40,11 @@ public class KafkaWriters {
     }
 
     @Bean
+    private NewTopic domainErrorTopic() {
+        return new NewTopic(sartKafkaConfiguration.getDomainErrorTopic(), 1, (short) 1);
+    }
+    
+    @Bean
     public NewTopic transactionCommandTopic() {
         return new NewTopic(sartKafkaConfiguration.getTransactionCommandTopic(), 1, (short) 1);
     }
@@ -45,6 +52,11 @@ public class KafkaWriters {
     @Bean
     private NewTopic transactionEventTopic() {
         return new NewTopic(sartKafkaConfiguration.getTransactionEventTopic(), 1, (short) 1);
+    }
+    
+    @Bean
+    private NewTopic transactionErrorTopic() {
+        return new NewTopic(sartKafkaConfiguration.getTransactionErrorTopic(), 1, (short) 1);
     }
 
     @Bean
@@ -98,6 +110,16 @@ public class KafkaWriters {
     }
 
     @Bean
+    @DependsOn("transactionErrorTopic")
+    private KafkaTemplate<Long, TransactionError> transactionErrorWriter() {
+        DefaultKafkaProducerFactory<Long, TransactionError> pf = new DefaultKafkaProducerFactory<>(
+            sartKafkaConfiguration.getKafkaTransactionErrorProducerConfig());
+        KafkaTemplate<Long, TransactionError> kafkaTemplate = new KafkaTemplate<>(pf, true);
+        kafkaTemplate.setDefaultTopic(sartKafkaConfiguration.getTransactionErrorTopic());
+        return kafkaTemplate;
+    }
+    
+    @Bean
     @DependsOn("domainCommandTopic")
     private KafkaTemplate<String, DomainCommand> domainCommandWriter() {
         DefaultKafkaProducerFactory<String, DomainCommand> pf = new DefaultKafkaProducerFactory<>(
@@ -114,6 +136,16 @@ public class KafkaWriters {
             sartKafkaConfiguration.getKafkaDomainEventProducerConfig());
         KafkaTemplate<String, DomainEvent<?>> kafkaTemplate = new KafkaTemplate<>(pf, true);
         kafkaTemplate.setDefaultTopic(sartKafkaConfiguration.getDomainEventTopic());
+        return kafkaTemplate;
+    }
+    
+    @Bean
+    @DependsOn("domainErrorTopic")
+    private KafkaTemplate<Long, DomainError> domainErrorWriter() {
+        DefaultKafkaProducerFactory<Long, DomainError> pf = new DefaultKafkaProducerFactory<>(
+            sartKafkaConfiguration.getKafkaDomainErrorProducerConfig());
+        KafkaTemplate<Long, DomainError> kafkaTemplate = new KafkaTemplate<>(pf, true);
+        kafkaTemplate.setDefaultTopic(sartKafkaConfiguration.getDomainErrorTopic());
         return kafkaTemplate;
     }
 
@@ -178,12 +210,18 @@ public class KafkaWriters {
     
     @Autowired
     KafkaTemplate<Long, TransactionEvent> transactionEventWriter;
+    
+    @Autowired
+    KafkaTemplate<Long, TransactionError> transactionErrorWriter;
 
     @Autowired
     KafkaTemplate<String, DomainCommand> domainCommandWriter;
     
     @Autowired
     KafkaTemplate<String, DomainEvent<?>> domainEventWriter;
+    
+    @Autowired
+    KafkaTemplate<Long, DomainError> domainErrorWriter;
     
     @Autowired
     KafkaTemplate<String, DomainQuery> conflictQueryWriter;
@@ -211,6 +249,10 @@ public class KafkaWriters {
     public KafkaTemplate<Long, TransactionEvent> getTransactionEventWriter() {
         return transactionEventWriter;
     }
+    
+    public KafkaTemplate<Long, TransactionError> getTransactionErrorWriter() {
+        return transactionErrorWriter;
+    }
 
     public KafkaTemplate<String, DomainCommand> getDomainCommandWriter() {
         return domainCommandWriter;
@@ -218,6 +260,10 @@ public class KafkaWriters {
 
     public KafkaTemplate<String, DomainEvent<?>> getDomainEventWriter() {
         return domainEventWriter;
+    }
+    
+    public KafkaTemplate<Long, DomainError> getDomainErrorWriter() {
+        return domainErrorWriter;
     }
 
     public KafkaTemplate<String, DomainQuery> getConflictQueryWriter() {

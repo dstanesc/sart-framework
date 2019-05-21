@@ -13,6 +13,7 @@ import org.sartframework.command.transaction.CreateTransactionCommand;
 import org.sartframework.command.transaction.LogProgressCommand;
 import org.sartframework.command.transaction.StartTransactionCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.TransactionEvent;
 import org.sartframework.event.transaction.DomainEventCompensatedEvent;
@@ -373,5 +374,7 @@ public abstract class GenericTransactionAggregate implements TransactionAggregat
     protected abstract void dispatch(DomainCommand domainCommand);
 
     protected abstract void dispatch(TransactionEvent transactionEvent);
+    
+    protected abstract void dispatch(TransactionError transactionError);
 
 }

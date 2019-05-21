@@ -3,12 +3,14 @@ package org.sartframework.driver;
 import java.util.function.Consumer;
 
 import org.sartframework.command.DomainCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
-import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.sartframework.query.DomainQuery;
 import org.sartframework.session.SystemSnapshot;
@@ -46,6 +48,10 @@ public interface TransactionDriverInternal extends TransactionDriver {
     <T extends DomainEvent<? extends DomainCommand>> void onProgress(Consumer<T> progressConsumer, Class<T> eventType,  long xid);
 
     <T extends DomainEvent<? extends DomainCommand>> void onCompensate(Consumer<T> compensateConsumer, Class<T> eventType, long xid);
+    
+    <T extends DomainError> void onDomainError(Consumer<T> domainErrorConsumer, Class<T> errorType, long xid);
+    
+    <T extends TransactionError> void onTransactionError(Consumer<T> transactionErrorConsumer, Class<T> errorType, long xid);
     
     <C extends DomainCommand> void sendCommand(C domainCommand);
     

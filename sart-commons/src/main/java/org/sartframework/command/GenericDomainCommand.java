@@ -82,8 +82,7 @@ public abstract class GenericDomainCommand<T extends GenericDomainCommand<?>> im
 
     @Override
     public String toString() {
-        return "GenericDomainCommand [xid=" + xid + ", xcs=" + xcs + ", aggregateKey=" + aggregateKey + ", aggregateVersion="
+        return getClass().getSimpleName() +" [xid=" + xid + ", xcs=" + xcs + ", aggregateKey=" + aggregateKey + ", aggregateVersion="
             + aggregateVersion + "]";
     }
-
 }

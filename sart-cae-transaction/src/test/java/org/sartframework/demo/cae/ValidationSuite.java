@@ -17,7 +17,9 @@ import org.junit.runners.Suite;
     IsolationTest.class,
     DurationTest.class,
     WorkflowTest.class,
-    AttachDetailsTest.class
+    AttachDetailsTest.class,
+    DomainErrorTest.class,
+    SystemFaultTest.class
 })
 
 public class ValidationSuite {}

@@ -10,6 +10,9 @@ import java.util.stream.Stream;
 import org.sartframework.command.BatchDomainCommand;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.TransactionStatus;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.SystemFault;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
@@ -64,6 +67,10 @@ public interface DomainTransaction extends TransactionStatus {
     <T extends DomainEvent<? extends DomainCommand>> DomainTransaction onProgress(Consumer<T> progressConsumer, Class<T> eventType);
 
     <T extends DomainEvent<? extends DomainCommand>> DomainTransaction onCompensate(Consumer<T> compensateConsumer, Class<T> eventType);
+    
+    <T extends DomainError> DomainTransaction onDomainError(Consumer<T> domainErrorConsumer, Class<T> errorType);
+    
+    DomainTransaction onSystemFault(Consumer<SystemFault> transactionErrorConsumer);
     
     AtomicInteger getCommandSequenceCounter();
 

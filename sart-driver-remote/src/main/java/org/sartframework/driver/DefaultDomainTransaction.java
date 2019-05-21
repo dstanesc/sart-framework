@@ -7,6 +7,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.sartframework.command.DomainCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.SystemFault;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
@@ -320,6 +323,24 @@ public class DefaultDomainTransaction implements DomainTransaction {
         return this;
     }
 
+    
+    @Override
+    public <T extends DomainError> DomainTransaction onDomainError(Consumer<T> domainErrorConsumer, Class<T> errorType) {
+       
+        getTransactionDriver().onDomainError(domainErrorConsumer, errorType, getXid());
+        
+        return this;
+    }
+
+    @Override
+    public DomainTransaction onSystemFault(Consumer<SystemFault> systemFaultConsumer) {
+       
+        getTransactionDriver().onTransactionError(systemFaultConsumer, SystemFault.class, getXid());
+        
+        return this;
+    }
+
+    
     public TransactionDriverInternal getTransactionDriver() {
 
         return transactionDriverInternal;

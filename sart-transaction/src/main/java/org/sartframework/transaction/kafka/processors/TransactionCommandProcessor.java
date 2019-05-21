@@ -5,6 +5,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.sartframework.command.transaction.CreateTransactionCommand;
 import org.sartframework.command.transaction.TransactionCommand;
+import org.sartframework.error.transaction.SystemFault;
 import org.sartframework.kafka.config.SartKafkaConfiguration;
 import org.sartframework.transaction.BusinessTransactionManager;
 import org.sartframework.transaction.kafka.KafkaTransactionAggregate;
@@ -59,8 +60,10 @@ public class TransactionCommandProcessor implements Processor<Long, TransactionC
                 txnAggregate.setPartition(context.partition());
                 txnAggregate.setOffset(context.offset());
 
-            } else
-                throw new RuntimeException("invalid transaction command " + transactionCommand);
+            } else {
+                
+                streamsContext.publish( new SystemFault(xid, new RuntimeException("invalid transaction command " + transactionCommand)));
+            }
         }
 
         txnAggregate.setPublisher(streamsContext);

@@ -11,7 +11,7 @@ import org.sartframework.event.AggregateFieldElementRemovedEvent;
 import org.sartframework.event.AggregateFieldIncrementedEvent;
 import org.sartframework.event.AggregateFieldUpdatedEvent;
 
-public interface DomainAggregate extends VersionedAggregate, UniqueAggregate, CommandChannel, EventChannel {
+public interface DomainAggregate extends VersionedAggregate, UniqueAggregate, CommandChannel, EventChannel, ErrorChannel {
     
     public final static long XMAX_NOT_SET = -1;
 

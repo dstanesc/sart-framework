@@ -8,9 +8,11 @@ import java.util.TreeMap;
 
 import javax.persistence.Id;
 
+import org.sartframework.command.DefaultVoidDomainCommand;
 import org.sartframework.command.DomainCommand;
 import org.sartframework.command.transaction.AbortTransactionCommand;
 import org.sartframework.command.transaction.LogProgressCommand;
+import org.sartframework.error.DomainError;
 import org.sartframework.event.AggregateCreatedEvent;
 import org.sartframework.event.AggregateDestructedEvent;
 import org.sartframework.event.AggregateDestructionReversedEvent;
@@ -349,9 +351,25 @@ public abstract class GenericDomainAggregate implements DomainAggregate {
         }
     }
 
-    protected void fail(long xid) {
+    protected void dispatch(DomainError domainError) {
 
-        LOGGER.info("Failing TX {} ", xid);
+        LOGGER.info("Dispatch error xid={}, xcs={}, domainError={}", domainError.getXid(), domainError.getXcs(), domainError);
+
+        publish(domainError);
+
+        /*
+         * Increment the transaction progress counter also when errors pushed
+         * back and business events not generated with void commands / events.
+         */
+        DefaultVoidDomainCommand voidCommand = new DefaultVoidDomainCommand(domainError.getAggregateKey(), domainError.getAggregateVersion())
+            .addTransactionHeader(domainError.getXid(), domainError.getXcs());
+
+        publish(voidCommand);
+    }
+    
+    protected void abortTransaction(long xid) {
+
+        LOGGER.info("Aborting TX {} ", xid);
 
         publish(new AbortTransactionCommand(xid));
     }

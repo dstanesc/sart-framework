@@ -3,13 +3,15 @@ package org.sartframework.transaction;
 import java.io.Closeable;
 
 import org.sartframework.command.DomainCommand;
+import org.sartframework.error.DomainError;
+import org.sartframework.error.transaction.TransactionError;
 import org.sartframework.event.DomainEvent;
 import org.sartframework.event.transaction.ConflictResolvedEvent;
-import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.ProgressLoggedEvent;
 import org.sartframework.event.transaction.TransactionAbortedEvent;
 import org.sartframework.event.transaction.TransactionCommittedEvent;
 import org.sartframework.event.transaction.TransactionCompletedEvent;
+import org.sartframework.event.transaction.TransactionDetailsAttachedEvent;
 import org.sartframework.event.transaction.TransactionStartedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +39,14 @@ public class TransactionMonitors implements Closeable {
 
     ReplayProcessor<DomainEvent<? extends DomainCommand>> progressMonitor = ReplayProcessor.<DomainEvent<? extends DomainCommand>> create();
     
-    public TransactionMonitors() {
+    final Long xid;
+    
+    public TransactionMonitors(Long xid) {
+       this.xid = xid;
+    }
+
+    public Long getXid() {
+        return xid;
     }
 
     public void onNextStart(TransactionStartedEvent e) {
@@ -76,7 +85,8 @@ public class TransactionMonitors implements Closeable {
             throw new UnsupportedOperationException(" Invalid xcs " + xcs);
     }
     
-    
+  
+   
     public MonoProcessor<TransactionStartedEvent> startMonitor() {
         return startMonitor;
     }
@@ -108,7 +118,9 @@ public class TransactionMonitors implements Closeable {
     public ReplayProcessor<DomainEvent<? extends DomainCommand>> progressMonitor() {
         return progressMonitor;
     }
-
+    
+   
+  
     @Override
     public void close() {
 

@@ -1,5 +1,5 @@
 package org.sartframework.aggregate;
 
-public interface Publisher extends EventChannel, CommandChannel {
+public interface Publisher extends EventChannel, CommandChannel, ErrorChannel {
 
 }

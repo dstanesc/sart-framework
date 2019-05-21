@@ -4,6 +4,7 @@ import org.sartframework.demo.cae.command.BatchInputDeckCreateCommand;
 import org.sartframework.demo.cae.command.ForceValidationFailureCommand;
 import org.sartframework.demo.cae.command.InputDeckAddResultCommand;
 import org.sartframework.demo.cae.command.InputDeckCreateCommand;
+import org.sartframework.demo.cae.command.InputDeckDeleteCommand;
 import org.sartframework.demo.cae.command.InputDeckUpdateFileCommand;
 import org.sartframework.transaction.BusinessTransactionManager;
 import org.slf4j.Logger;
@@ -44,6 +45,16 @@ public class SimplifiedSimulationRestController {
             inputDeckCreateCommand.getXcs());
 
         transactionManager.publish(inputDeckCreateCommand);
+    }
+    
+    @PostMapping("/inputDeck/delete")
+    @ResponseStatus(value = HttpStatus.OK)
+    public void deleteInputDeck(@RequestBody InputDeckDeleteCommand inputDeckDeleteCommand) {
+
+        LOGGER.info("REST call delete inputDeckId = {}, xid={}, xcs={}", inputDeckDeleteCommand.getAggregateKey(), inputDeckDeleteCommand.getXid(),
+            inputDeckDeleteCommand.getXcs());
+
+        transactionManager.publish(inputDeckDeleteCommand);
     }
 
     @PostMapping("/inputDeck/addResult")

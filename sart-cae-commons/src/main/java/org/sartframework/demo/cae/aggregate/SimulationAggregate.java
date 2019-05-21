@@ -14,12 +14,14 @@ import org.sartframework.demo.cae.command.InputDeckCreateCommand;
 import org.sartframework.demo.cae.command.InputDeckDeleteCommand;
 import org.sartframework.demo.cae.command.InputDeckRemoveResultCommand;
 import org.sartframework.demo.cae.command.InputDeckUpdateFileCommand;
+import org.sartframework.demo.cae.error.InputDeckInvalidFileError;
 import org.sartframework.demo.cae.event.InputDeckCreatedEvent;
 import org.sartframework.demo.cae.event.InputDeckDeletedEvent;
 import org.sartframework.demo.cae.event.InputDeckFileUpdatedEvent;
 import org.sartframework.demo.cae.event.InputDeckResultAddedEvent;
 import org.sartframework.demo.cae.event.InputDeckResultRemoveReversedEvent;
 import org.sartframework.demo.cae.event.InputDeckResultRemovedEvent;
+import org.sartframework.error.DomainError;
 import org.sartframework.event.DomainEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,9 +62,8 @@ public class SimulationAggregate extends AnnotatedDomainAggregate {
         long xid = c.getXid();
 
         long xcs = c.getXcs();
-        
 
-        if (validate(c)) {
+        if (validateFile(c)) {
 
             DomainEvent<? extends DomainCommand> inputDeckCreated = new InputDeckCreatedEvent(c.getAggregateKey(), c.getInputDeckName(),
                 c.getInputDeckFile()).addTransactionHeader(xid, xcs);
@@ -71,16 +72,23 @@ public class SimulationAggregate extends AnnotatedDomainAggregate {
 
         } else {
 
-            fail(xid);
+            DomainError fileError = new InputDeckInvalidFileError(c.getAggregateKey(), 0L, c.getInputDeckFile()).addTransactionHeader(xid, xcs);
+            
+            dispatch(fileError);
         }
     }
 
     
-    private boolean validate(InputDeckCreateCommand c) {
+    private boolean validateFile(InputDeckCreateCommand c) {
 
-        return true;
+       return isFileValid(c.getInputDeckFile());
     }
 
+    private boolean isFileValid(String inputDeckFile) {
+        
+        // Dummy check
+        return !inputDeckFile.contains("invalid");
+    }
 
     @DomainCommandHandler
     public void handle(InputDeckUpdateFileCommand c) {
@@ -147,7 +155,7 @@ public class SimulationAggregate extends AnnotatedDomainAggregate {
 
         LOGGER.info("Force validation failure command received {} ", c);
         
-        fail(c.getXid());
+        abortTransaction(c.getXid());
     }
 
 

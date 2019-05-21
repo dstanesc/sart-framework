@@ -58,8 +58,10 @@ public class DomainCommandService implements ManagedService<DomainCommandService
                 KafkaStreamsContext streamsContext = new KafkaStreamsContext()
                     .setDomainCommandChannel("domain-command-sink")
                     .setDomainEventChannel("domain-event-sink")
+                    .setDomainErrorChannel("domain-error-sink")
                     .setTransactionCommandChannel("transaction-command-sink")
-                    .setTransactionEventChannel("transaction-event-sink");
+                    .setTransactionEventChannel("transaction-event-sink")
+                    .setTransactionErrorChannel("transaction-error-sink");
 
                 return new DomainCommandProcessor(kafkaStreamsConfiguration, streamsContext);
                 
@@ -73,11 +75,17 @@ public class DomainCommandService implements ManagedService<DomainCommandService
             .addSink("domain-event-sink", kafkaStreamsConfiguration.getDomainEventTopic(), SartSerdes.String().serializer(),
                 SartSerdes.DomainEventSerde().serializer(), "domain-command-validator")
 
+            .addSink("domain-error-sink", kafkaStreamsConfiguration.getDomainErrorTopic(), SartSerdes.Long().serializer(),
+                SartSerdes.DomainErrorSerde().serializer(), "domain-command-validator")
+
             .addSink("transaction-command-sink", kafkaStreamsConfiguration.getTransactionCommandTopic(), SartSerdes.Long().serializer(),
                 SartSerdes.TransactionCommandSerde().serializer(), "domain-command-validator")
 
             .addSink("transaction-event-sink", kafkaStreamsConfiguration.getTransactionEventTopic(), SartSerdes.Long().serializer(),
-                SartSerdes.TransactionEventSerde().serializer(), "domain-command-validator");
+                SartSerdes.TransactionEventSerde().serializer(), "domain-command-validator")
+        
+            .addSink("transaction-error-sink", kafkaStreamsConfiguration.getTransactionErrorTopic(), SartSerdes.Long().serializer(),
+                SartSerdes.TransactionErrorSerde().serializer(), "domain-command-validator");
 
         kafkaStreams = new KafkaStreams(commandHandlingTopology,
             new StreamsConfig(kafkaStreamsConfiguration.getKafkaStreamsProcessorConfig("domain-command-processor")));

@@ -58,7 +58,8 @@ public class TransactionCommandService implements ManagedService<TransactionComm
                 KafkaStreamsContext streamsContext = new KafkaStreamsContext()
                     .setDomainCommandChannel("domain-command-sink")
                     .setTransactionCommandChannel("transaction-command-sink")
-                    .setTransactionEventChannel("transaction-event-sink");
+                    .setTransactionEventChannel("transaction-event-sink")
+                    .setTransactionErrorChannel("transaction-error-sink");
 
                 return new TransactionCommandProcessor(kafkaStreamsConfiguration, businessTransactionManager, streamsContext);
 
@@ -71,6 +72,9 @@ public class TransactionCommandService implements ManagedService<TransactionComm
             
             .addSink("transaction-event-sink", kafkaStreamsConfiguration.getTransactionEventTopic(), SartSerdes.Long().serializer(),
                 SartSerdes.TransactionEventSerde().serializer(), "transaction-command-validator")
+            
+            .addSink("transaction-error-sink", kafkaStreamsConfiguration.getTransactionErrorTopic(), SartSerdes.Long().serializer(),
+                SartSerdes.TransactionErrorSerde().serializer(), "transaction-command-validator")
 
             .addSink("domain-command-sink", kafkaStreamsConfiguration.getDomainCommandTopic(), SartSerdes.String().serializer(),
                 SartSerdes.DomainCommandSerde().serializer(), "transaction-command-validator");
