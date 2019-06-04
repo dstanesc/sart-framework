@@ -54,7 +54,7 @@ public class TransactionLifecycleMonitorService implements ManagedService<Transa
     
     ExecutorService executor = Executors.newFixedThreadPool(5);
     
-    ReplayProcessor<EventDescriptor> eventDescriptorFlux = ReplayProcessor.<EventDescriptor> create(1000);
+    ReplayProcessor<EventDescriptor> eventDescriptorFlux = ReplayProcessor.<EventDescriptor> create();
     
     @Autowired
     public TransactionLifecycleMonitorService(SartKafkaConfiguration kafkaStreamsConfiguration,
