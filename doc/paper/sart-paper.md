@@ -170,9 +170,9 @@ An interesting benchmark was published by Adam Jacobs, The Pathologies of Big Da
 
 ![Comparing Random and Sequential Access in Disk and Memory](img/seq-access.png)
 
-> _"On typical server hardware today, completely random memory access on a range much larger than cache size can be an order of magnitude or more slower than purely sequential access, but completely random disk access can be five orders of magnitude slower than sequential access (figure 3). Even state-of-the-art solid-state (flash) disks, although they have much lower seek latency than magnetic disks, can differ in speed by roughly four orders of magnitude between random and sequential access patterns. The results for the test shown in figure 3 are the number of four-byte integer values read per second from a 1-billion-long (4 GB) array on disk or in memory; random disk reads are for 10,000 indices chosen at random between one and 1 billion."_ 
+> _"On typical server hardware today, completely random memory access on a range much larger than cache size can be an order of magnitude or more slower than purely sequential access, but completely random disk access can be five orders of magnitude slower than sequential access (figure above). Even state-of-the-art solid-state (flash) disks, although they have much lower seek latency than magnetic disks, can differ in speed by roughly four orders of magnitude between random and sequential access patterns. The results for the test shown in figure 3 are the number of four-byte integer values read per second from a 1-billion-long (4 GB) array on disk or in memory; random disk reads are for 10,000 indices chosen at random between one and 1 billion."_ 
 
-> _Adam Jacobs, The Pathologies of Big Data_  
+>> _Adam Jacobs, The Pathologies of Big Data_  
 
 It is important to note that the I/O interface of the _append only log_ structure is essentially sequential.
 
