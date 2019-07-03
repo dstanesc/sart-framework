@@ -63,8 +63,7 @@ public class SystemFaultTest extends AbstractCaeTest {
             })
 
             /*
-             * Handle business error, such as re-publish the input deck with
-             * valid file
+             * Handle system fault
              */
 
             .onSystemFault(systemFault -> {

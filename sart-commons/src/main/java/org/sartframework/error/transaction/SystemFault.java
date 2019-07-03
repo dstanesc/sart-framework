@@ -3,7 +3,7 @@ package org.sartframework.error.transaction;
 import org.sartframework.annotation.Evolvable;
 
 @Evolvable(version = 1)
-public class SystemFault implements TransactionError {
+public final class SystemFault implements TransactionError {
 
     long xid;
 
