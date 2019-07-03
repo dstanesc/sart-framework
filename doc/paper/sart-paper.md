@@ -1050,6 +1050,10 @@ PlatformOperationRegistry.get().registerAdapter(EvolvedCommand.class, new PhaseA
 
 ```
 
+## Software Modules
+
+![Software Modules](img/sart-modules.png)  
+
 ## Terminology 
 
 <b id="t1">Domain Driven Design</b>  - is an extensive set of design practices, techniques, and principles coined by Eric Evans in his seminal book _Domain-Driven Design: Tackling Complexity in the Heart of Software_ 
