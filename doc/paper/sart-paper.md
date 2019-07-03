@@ -168,7 +168,7 @@ The experience so far in Simulation Data Management indicates a strong correlati
 
 An interesting benchmark was published by Adam Jacobs, The Pathologies of Big Data in ACM Newsletter:
 
-![Comparing Random and Sequential Access in Disk and Memory](https://deliveryimages.acm.org/10.1145/1570000/1563874/jacobs3.jpg)
+![Comparing Random and Sequential Access in Disk and Memory](img/seq-access.png)
 
 > _"On typical server hardware today, completely random memory access on a range much larger than cache size can be an order of magnitude or more slower than purely sequential access, but completely random disk access can be five orders of magnitude slower than sequential access (figure 3). Even state-of-the-art solid-state (flash) disks, although they have much lower seek latency than magnetic disks, can differ in speed by roughly four orders of magnitude between random and sequential access patterns. The results for the test shown in figure 3 are the number of four-byte integer values read per second from a 1-billion-long (4 GB) array on disk or in memory; random disk reads are for 10,000 indices chosen at random between one and 1 billion."_ 
 
