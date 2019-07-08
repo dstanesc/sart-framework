@@ -1050,11 +1050,15 @@ PlatformOperationRegistry.get().registerAdapter(EvolvedCommand.class, new PhaseA
 
 ```
 
-## Modules
+## Functional Blocks
 
-![Modules](img/sart-modules.png)
+As motivated throughout the paper, a central architectural component of the framework is the ecosystem of _Log structures_ which channel the information among the internal components. The interaction with the business components is isolated by the _Transaction API_ module.
 
-## Logs
+![Functional blocks](img/sart-modules.png)
+
+## Logs & Services
+
+The diagram below outlines the major categories of _Logs_ and _Services_ existing in the framework.
 
 ![Logs](img/sart-logs.png)
 
