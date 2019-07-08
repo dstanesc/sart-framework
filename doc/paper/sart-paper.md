@@ -1050,9 +1050,13 @@ PlatformOperationRegistry.get().registerAdapter(EvolvedCommand.class, new PhaseA
 
 ```
 
-## Software Modules
+## Modules
 
-![Software Modules](img/sart-modules.png)  
+![Modules](img/sart-modules.png)
+
+## Logs
+
+![Logs](img/sart-logs.png)
 
 ## Terminology 
 
